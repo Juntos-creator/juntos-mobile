@@ -1,0 +1,47 @@
+{
+  "expo": {
+    "name": "JUNTOS Acompañamiento",
+    "slug": "juntos-mobile",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "automatic",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.juntos.app",
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "Juntos necesita tu ubicación para mostrar el seguimiento en vivo del acompañamiento del adulto mayor.",
+        "NSCameraUsageDescription": "Juntos usa la cámara para capturar documentos de verificación (KYC)."
+      }
+    },
+    "android": {
+      "package": "com.juntos.app",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#ffffff"
+      },
+      "permissions": [
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION",
+        "CAMERA"
+      ]
+    },
+    "web": {
+      "bundler": "metro"
+    },
+    "plugins": [
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Permitir que Juntos acceda a la ubicación para el servicio de acompañamiento."
+        }
+      ]
+    ],
+    "scheme": "juntosapp"
+  }
+}
