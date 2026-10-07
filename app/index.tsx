@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { StyleSheet, Text, View, TextInput, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
+import { StyleSheet, Text, View, TextInput, TouchableOpacity, ActivityIndicator, Alert, Platform } from 'react-native';
 import { supabase } from '../src/services/supabase';
 import { useRouter } from 'expo-router';
 
@@ -9,9 +9,18 @@ export default function LoginScreen() {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
+  // Función auxiliar para mostrar alertas compatibles con Web y Móvil
+  const showAlert = (title: string, message: string) => {
+    if (Platform.OS === 'web') {
+      window.alert(`${title}: ${message}`);
+    } else {
+      Alert.alert(title, message);
+    }
+  };
+
   const handleLogin = async () => {
     if (!email || !password) {
-      Alert.alert('Error', 'Por favor ingresa tu correo y contraseña.');
+      showAlert('Error', 'Por favor ingresa tu correo y contraseña.');
       return;
     }
 
@@ -23,7 +32,7 @@ export default function LoginScreen() {
 
     if (error) {
       setLoading(false);
-      Alert.alert('Error de Acceso', error.message);
+      showAlert('Error de Acceso', error.message);
       return;
     }
 
@@ -36,7 +45,7 @@ export default function LoginScreen() {
     setLoading(false);
 
     if (profileError || !profile) {
-      Alert.alert('Error', 'No se pudo cargar el perfil del usuario.');
+      showAlert('Error', 'No se pudo cargar el perfil del usuario.');
       return;
     }
 
@@ -87,6 +96,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     justifyContent: 'center',
+    alignItems: 'center',
     padding: 24,
     backgroundColor: '#f8f9fa',
   },
@@ -104,6 +114,8 @@ const styles = StyleSheet.create({
     marginBottom: 32,
   },
   form: {
+    width: '100%',
+    maxWidth: 400,
     backgroundColor: '#ffffff',
     padding: 20,
     borderRadius: 12,
