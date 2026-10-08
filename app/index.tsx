@@ -12,7 +12,7 @@ export default function ConsumerLandingScreen() {
           <Text style={styles.brandSubtitle}>Agencia de Acompañamiento y Cuidado No Clínico</Text>
         </View>
 
-        {/* Hero Section con Imagen Segura de Envejeciente */}
+        {/* Hero Section con Imagen Real de Envejeciente */}
         <View style={styles.heroContainer}>
           <View style={styles.heroTextContainer}>
             <Text style={styles.heroTitle}>Compañía, calidez y bienestar para el adulto mayor</Text>
@@ -21,8 +21,9 @@ export default function ConsumerLandingScreen() {
             </Text>
           </View>
           <View style={styles.imageCard}>
+            {/* Imagen corregida de un adulto mayor sonriente */}
             <Image 
-              source={{ uri: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?q=80&w=800&auto=format&fit=crop' }} 
+              source={{ uri: 'https://images.unsplash.com/photo-1544717305-2782549b5136?q=80&w=800&auto=format&fit=crop' }} 
               style={styles.careImage}
               resizeMode="cover"
             />
@@ -89,7 +90,6 @@ const styles = StyleSheet.create({
   heroTitle: { fontSize: 26, fontWeight: '800', color: '#1E293B', marginBottom: 12, lineHeight: 34 },
   heroDescription: { fontSize: 15, color: '#475569', lineHeight: 22 },
   
-  // Se asegura un alto explícito (260px) para que la imagen renderice correctamente
   imageCard: { width: 340, height: 260, borderRadius: 16, overflow: 'hidden', position: 'relative', marginTop: 15, backgroundColor: '#E2E8F0' },
   careImage: { width: '100%', height: '100%' },
   imageOverlayText: { position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: 'rgba(15, 23, 42, 0.8)', padding: 12 },
