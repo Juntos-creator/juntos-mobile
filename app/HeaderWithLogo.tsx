@@ -50,4 +50,4 @@ const styles = StyleSheet.create({
   titleText: { fontSize: 18, fontWeight: 'bold', color: '#333' },
   subText: { fontSize: 12, color: '#666' },
   iconButton: { padding: 8, backgroundColor: '#E2E8F0', borderRadius: 8 }
-});
+})
