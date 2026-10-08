@@ -12,7 +12,7 @@ export default function ConsumerLandingScreen() {
           <Text style={styles.brandSubtitle}>Agencia de Acompañamiento y Cuidado No Clínico</Text>
         </View>
 
-        {/* Hero Section con Imagen de Adulto Mayor en el Parque */}
+        {/* Hero Section con Imagen de Adulto Mayor / Envejeciente */}
         <View style={styles.heroContainer}>
           <View style={styles.heroTextContainer}>
             <Text style={styles.heroTitle}>Compañía, calidez y bienestar para el adulto mayor</Text>
@@ -21,9 +21,9 @@ export default function ConsumerLandingScreen() {
             </Text>
           </View>
           <View style={styles.imageCard}>
-            {/* Imagen actualizada: Adulto mayor disfrutando en el parque */}
+            {/* Imagen actualizada de un adulto mayor sonriente disfrutando al aire libre */}
             <Image 
-              source={{ uri: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?q=80&w=800&auto=format&fit=crop' }} 
+              source={{ uri: 'https://images.unsplash.com/photo-1447752875215-b2761acb3c5d?q=80&w=800&auto=format&fit=crop' }} 
               style={styles.careImage}
               resizeMode="cover"
             />
