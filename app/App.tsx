@@ -48,7 +48,7 @@ export default function App() {
                 else if (role === 'legal') setCurrentModule('legal');
                 else if (role === 'rrhh') setCurrentModule('dispatch');
                 else if (role === 'cliente') setCurrentModule('client');
-                else if (role === 'acompanante') setCurrentModule('kyc'); // Acompañante por defecto suele ir a KYC o dashboard
+                else if (role === 'acompanante') setCurrentModule('kyc');
                 else setCurrentModule('landing');
               }}
             >
@@ -146,9 +146,14 @@ export default function App() {
         </ScrollView>
       </View>
 
-      {/* Renderizado dinámico protegido */}
+      {/* Renderizado dinámico protegido con navegación conectada */}
       <View style={styles.content}>
-        {currentModule === 'landing' && <ConsumerLandingScreen />}
+        {currentModule === 'landing' && (
+          <ConsumerLandingScreen 
+            onNavigateLogin={() => setCurrentModule('login')} 
+            onNavigateRegister={() => setCurrentModule('register')} 
+          />
+        )}
         {currentModule === 'login' && <LoginScreen />}
         {currentModule === 'register' && <RegisterScreen />}
         {currentModule === 'kyc' && userRole !== 'cliente' && <CompanionKycScreen />}

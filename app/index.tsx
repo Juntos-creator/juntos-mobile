@@ -9,21 +9,33 @@ import {
   TouchableOpacity,
   Platform,
 } from 'react-native';
-import { useRouter } from 'expo-router';
 
-export default function ConsumerLandingScreen() {
-  const router = useRouter();
+interface ConsumerLandingProps {
+  onNavigateLogin?: () => void;
+  onNavigateRegister?: () => void;
+}
+
+export default function ConsumerLandingScreen({
+  onNavigateLogin,
+  onNavigateRegister,
+}: ConsumerLandingProps) {
 
   const handleRequestService = () => {
-    router.push('/register');
+    if (onNavigateRegister) {
+      onNavigateRegister();
+    }
   };
 
   const handleRegister = () => {
-    router.push('/register');
+    if (onNavigateRegister) {
+      onNavigateRegister();
+    }
   };
 
   const handleLogin = () => {
-    router.push('/login');
+    if (onNavigateLogin) {
+      onNavigateLogin();
+    }
   };
 
   return (
