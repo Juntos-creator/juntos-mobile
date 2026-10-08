@@ -64,34 +64,38 @@ export default function App() {
       <View style={styles.navBar}>
         <ScrollView horizontal showsHorizontalScrollIndicator={false}>
           
-          {/* Módulos Comerciales (Visibles para todos o clientes) */}
-          <Text style={styles.sectionLabel}>Comercial:</Text>
-          <TouchableOpacity style={[styles.navBtn, currentModule === 'landing' && styles.navBtnActive]} onPress={() => setCurrentModule('landing')}>
-            <Text style={[styles.navText, currentModule === 'landing' && styles.navTextActive]}>Landing</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={[styles.navBtn, currentModule === 'login' && styles.navBtnActive]} onPress={() => setCurrentModule('login')}>
-            <Text style={[styles.navText, currentModule === 'login' && styles.navTextActive]}>Login</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={[styles.navBtn, currentModule === 'register' && styles.navBtnActive]} onPress={() => setCurrentModule('register')}>
-            <Text style={[styles.navText, currentModule === 'register' && styles.navTextActive]}>Registro</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={[styles.navBtn, currentModule === 'kyc' && styles.navBtnActive]} onPress={() => setCurrentModule('kyc')}>
-            <Text style={[styles.navText, currentModule === 'kyc' && styles.navTextActive]}>KYC</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={[styles.navBtn, currentModule === 'checkout' && styles.navBtnActive]} onPress={() => setCurrentModule('checkout')}>
-            <Text style={[styles.navText, currentModule === 'checkout' && styles.navTextActive]}>Pagos</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={[styles.navBtn, currentModule === 'matching' && styles.navBtnActive]} onPress={() => setCurrentModule('matching')}>
-            <Text style={[styles.navText, currentModule === 'matching' && styles.navTextActive]}>Sala Situacional</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={[styles.navBtn, currentModule === 'rating' && styles.navBtnActive]} onPress={() => setCurrentModule('rating')}>
-            <Text style={[styles.navText, currentModule === 'rating' && styles.navTextActive]}>Valoración</Text>
-          </TouchableOpacity>
+          {/* Módulos Comerciales (Ocultos para rrhh, contable y legal puro) */}
+          {(userRole === 'admin' || userRole === 'cliente' || userRole === 'acompanante') && (
+            <>
+              <Text style={styles.sectionLabel}>Comercial:</Text>
+              <TouchableOpacity style={[styles.navBtn, currentModule === 'landing' && styles.navBtnActive]} onPress={() => setCurrentModule('landing')}>
+                <Text style={[styles.navText, currentModule === 'landing' && styles.navTextActive]}>Landing</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={[styles.navBtn, currentModule === 'login' && styles.navBtnActive]} onPress={() => setCurrentModule('login')}>
+                <Text style={[styles.navText, currentModule === 'login' && styles.navTextActive]}>Login</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={[styles.navBtn, currentModule === 'register' && styles.navBtnActive]} onPress={() => setCurrentModule('register')}>
+                <Text style={[styles.navText, currentModule === 'register' && styles.navTextActive]}>Registro</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={[styles.navBtn, currentModule === 'kyc' && styles.navBtnActive]} onPress={() => setCurrentModule('kyc')}>
+                <Text style={[styles.navText, currentModule === 'kyc' && styles.navTextActive]}>KYC</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={[styles.navBtn, currentModule === 'checkout' && styles.navBtnActive]} onPress={() => setCurrentModule('checkout')}>
+                <Text style={[styles.navText, currentModule === 'checkout' && styles.navTextActive]}>Pagos</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={[styles.navBtn, currentModule === 'matching' && styles.navBtnActive]} onPress={() => setCurrentModule('matching')}>
+                <Text style={[styles.navText, currentModule === 'matching' && styles.navTextActive]}>Sala Situacional</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={[styles.navBtn, currentModule === 'rating' && styles.navBtnActive]} onPress={() => setCurrentModule('rating')}>
+                <Text style={[styles.navText, currentModule === 'rating' && styles.navTextActive]}>Valoración</Text>
+              </TouchableOpacity>
+            </>
+          )}
 
           {/* Módulos Operativos (Restringidos según el rol) */}
           {(userRole === 'admin' || userRole === 'rrhh' || userRole === 'contable' || userRole === 'legal') && (
             <>
-              <Text style={[styles.sectionLabel, { marginLeft: 12 }]}>Backoffice:</Text>
+              <Text style={[styles.sectionLabel, { marginLeft: userRole === 'admin' ? 12 : 0 }]}>Backoffice:</Text>
               
               {/* Solo Administrador ve el Dashboard General y Portal Familiar/Clientes */}
               {(userRole === 'admin') && (
