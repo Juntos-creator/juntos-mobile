@@ -1,0 +1,98 @@
+import React, { useState } from 'react';
+import { StyleSheet, SafeAreaView, ScrollView, View, Text, TextInput, TouchableOpacity } from 'react-native';
+
+export default function LoginScreen() {
+  const [userType, setUserType] = useState<'client' | 'companion'>('client');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+
+  const handleLogin = () => {
+    alert(`Iniciando sesión como ${userType === 'client' ? 'Cliente / Familiar' : 'Acompañante'} con: ${email}`);
+  };
+
+  return (
+    <SafeAreaView style={styles.container}>
+      <ScrollView contentContainerStyle={styles.scrollContainer}>
+        
+        {/* Cabecera */}
+        <View style={styles.header}>
+          <Text style={styles.logoText}>JUNTOS</Text>
+          <Text style={styles.title}>Iniciar Sesión</Text>
+          <Text style={styles.subtitle}>Accede a tu cuenta de cuidado y acompañamiento</Text>
+        </View>
+
+        {/* Selector de Tipo de Usuario */}
+        <View style={styles.tabContainer}>
+          <TouchableOpacity 
+            style={[styles.tab, userType === 'client' && styles.activeTab]} 
+            onPress={() => setUserType('client')}
+          >
+            <Text style={[styles.tabText, userType === 'client' && styles.activeTabText]}>Cliente / Familiar</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity 
+            style={[styles.tab, userType === 'companion' && styles.activeTab]} 
+            onPress={() => setUserType('companion')}
+          >
+            <Text style={[styles.tabText, userType === 'companion' && styles.activeTabText]}>Acompañante</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Formulario */}
+        <View style={styles.formContainer}>
+          <Text style={styles.label}>Correo Electrónico</Text>
+          <TextInput 
+            style={styles.input} 
+            placeholder="ejemplo@correo.com" 
+            placeholderTextColor="#94A3B8"
+            value={email}
+            onChangeText={setEmail}
+            autoCapitalize="none"
+          />
+
+          <Text style={styles.label}>Contraseña</Text>
+          <TextInput 
+            style={styles.input} 
+            placeholder="••••••••" 
+            placeholderTextColor="#94A3B8"
+            secureTextEntry
+            value={password}
+            onChangeText={setPassword}
+          />
+
+          <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
+            <Text style={styles.loginButtonText}>Ingresar al Portal</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.forgotPassword}>
+            <Text style={styles.forgotText}>¿Olvidaste tu contraseña?</Text>
+          </TouchableOpacity>
+        </View>
+
+      </ScrollView>
+    </SafeAreaView>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: '#FFFFFF' },
+  scrollContainer: { padding: 24, justifyContent: 'center', alignItems: 'center' },
+  header: { alignItems: 'center', marginBottom: 32, width: '100%', maxWidth: 400 },
+  logoText: { fontSize: 24, fontWeight: '900', color: '#0F172A', letterSpacing: 2, marginBottom: 12 },
+  title: { fontSize: 22, fontWeight: '800', color: '#1E293B', marginBottom: 6 },
+  subtitle: { fontSize: 14, color: '#64748B', textAlign: 'center' },
+  
+  tabContainer: { flexDirection: 'row', backgroundColor: '#F1F5F9', borderRadius: 12, padding: 4, width: '100%', maxWidth: 400, marginBottom: 24 },
+  tab: { flex: 1, paddingVertical: 12, alignItems: 'center', borderRadius: 10 },
+  activeTab: { backgroundColor: '#FFFFFF', shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.1, shadowRadius: 2, elevation: 2 },
+  tabText: { fontSize: 13, fontWeight: '600', color: '#64748B' },
+  activeTabText: { color: '#0F172A', fontWeight: '700' },
+
+  formContainer: { width: '100%', maxWidth: 400 },
+  label: { fontSize: 13, fontWeight: '600', color: '#334155', marginBottom: 8 },
+  input: { backgroundColor: '#F8FAFC', borderWidth: 1, borderColor: '#CBD5E1', borderRadius: 12, paddingHorizontal: 16, paddingVertical: 12, fontSize: 14, color: '#0F172A', marginBottom: 16 },
+  loginButton: { backgroundColor: '#0284C7', paddingVertical: 14, borderRadius: 12, alignItems: 'center', marginTop: 8 },
+  loginButtonText: { color: '#FFFFFF', fontSize: 15, fontWeight: '700' },
+  forgotPassword: { alignItems: 'center', marginTop: 16 },
+  forgotText: { fontSize: 13, color: '#0284C7', fontWeight: '600' }
+});
