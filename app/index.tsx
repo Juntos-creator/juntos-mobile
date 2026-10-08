@@ -14,10 +14,8 @@ import { useRouter } from 'expo-router';
 export default function ConsumerLandingScreen() {
   const router = useRouter();
   const [activeRole, setActiveRole] = useState('CLIENTE');
-  const [activeTab, setActiveTab] = useState('Landing');
 
   const handleRequestService = () => {
-    // Redirige al registro o formulario de solicitud
     router.push('/register');
   };
 
@@ -37,11 +35,11 @@ export default function ConsumerLandingScreen() {
       >
 
         {/* =====================================================
-            BARRA DE SIMULACIÓN DE ROLES Y MENÚ COMERCIAL
+            ÚNICA BARRA DE SIMULACIÓN DE ROLES
         ====================================================== */}
         <View style={styles.simulationBarContainer}>
           <View style={styles.roleSimulationRow}>
-            <Text style={styles.simLabel}>Simular Rol de Usuario: </Text>
+            <Text style={styles.simLabel}>Simular Rol: </Text>
             {['ADMIN', 'RRHH', 'CONTABLE', 'LEGAL', 'CLIENTE', 'ACOMPANANTE'].map((role) => (
               <TouchableOpacity
                 key={role}
@@ -50,26 +48,6 @@ export default function ConsumerLandingScreen() {
               >
                 <Text style={[styles.roleChipText, activeRole === role && styles.activeRoleChipText]}>
                   {role}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-
-          <View style={styles.comercialMenuRow}>
-            <Text style={styles.simLabel}>COMERCIAL: </Text>
-            {['Landing', 'Login', 'Registro', 'Verificación', 'Pagos', 'Sala Situacional', 'Valoración'].map((tab) => (
-              <TouchableOpacity
-                key={tab}
-                style={[styles.comercialTab, activeTab === tab && styles.activeComercialTab]}
-                onPress={() => {
-                  setActiveTab(tab);
-                  if (tab === 'Login') router.push('/login');
-                  if (tab === 'Registro') router.push('/register');
-                  if (tab === 'Verificación') router.push('/verification');
-                }}
-              >
-                <Text style={[styles.comercialTabText, activeTab === tab && styles.activeComercialTabText]}>
-                  {tab}
                 </Text>
               </TouchableOpacity>
             ))}
@@ -554,13 +532,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
 
-  /* ================= SIMULACIÓN Y MENÚ COMERCIAL ================= */
+  /* ================= SIMULACIÓN DE ROLES ================= */
 
   simulationBarContainer: {
     width: '100%',
     maxWidth: 1180,
     backgroundColor: '#0F172A',
-    padding: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
     borderRadius: 12,
     marginBottom: 20,
   },
@@ -569,32 +548,22 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     flexWrap: 'wrap',
-    marginBottom: 8,
-  },
-
-  comercialMenuRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flexWrap: 'wrap',
-    borderTopWidth: 1,
-    borderTopColor: '#1E293B',
-    paddingTop: 8,
   },
 
   simLabel: {
     color: '#94A3B8',
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: '700',
-    marginRight: 8,
+    marginRight: 10,
   },
 
   roleChip: {
     backgroundColor: '#1E293B',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
     borderRadius: 6,
     marginRight: 6,
-    marginBottom: 4,
+    marginVertical: 2,
   },
 
   activeRoleChip: {
@@ -603,35 +572,12 @@ const styles = StyleSheet.create({
 
   roleChipText: {
     color: '#CBD5E1',
-    fontSize: 10,
+    fontSize: 11,
     fontWeight: '700',
   },
 
   activeRoleChipText: {
     color: '#FFFFFF',
-  },
-
-  comercialTab: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 6,
-    marginRight: 6,
-    marginBottom: 4,
-  },
-
-  activeComercialTab: {
-    backgroundColor: '#0284C7',
-  },
-
-  comercialTabText: {
-    color: '#94A3B8',
-    fontSize: 11,
-    fontWeight: '600',
-  },
-
-  activeComercialTabText: {
-    color: '#FFFFFF',
-    fontWeight: '700',
   },
 
   /* ================= HEADER ================= */
