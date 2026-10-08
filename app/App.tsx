@@ -43,12 +43,12 @@ export default function App() {
               style={[styles.roleBtn, userRole === role && styles.roleBtnActive]}
               onPress={() => {
                 setUserRole(role);
-                // Si el rol cambia y no tiene permiso al módulo actual, lo mandamos al landing o home por defecto
+                // Si el rol cambia y no tiene permiso al módulo actual, lo mandamos a su pantalla por defecto
                 if (role === 'contable') setCurrentModule('audit');
                 else if (role === 'legal') setCurrentModule('legal');
                 else if (role === 'rrhh') setCurrentModule('dispatch');
                 else if (role === 'cliente') setCurrentModule('client');
-                else if (role === 'acompanante') setCurrentModule('companion');
+                else if (role === 'acompanante') setCurrentModule('kyc'); // Acompañante por defecto suele ir a KYC o dashboard
                 else setCurrentModule('landing');
               }}
             >
@@ -77,9 +77,14 @@ export default function App() {
               <TouchableOpacity style={[styles.navBtn, currentModule === 'register' && styles.navBtnActive]} onPress={() => setCurrentModule('register')}>
                 <Text style={[styles.navText, currentModule === 'register' && styles.navTextActive]}>Registro</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={[styles.navBtn, currentModule === 'kyc' && styles.navBtnActive]} onPress={() => setCurrentModule('kyc')}>
-                <Text style={[styles.navText, currentModule === 'kyc' && styles.navTextActive]}>KYC</Text>
-              </TouchableOpacity>
+              
+              {/* KYC oculto para el rol CLIENTE */}
+              {userRole !== 'cliente' && (
+                <TouchableOpacity style={[styles.navBtn, currentModule === 'kyc' && styles.navBtnActive]} onPress={() => setCurrentModule('kyc')}>
+                  <Text style={[styles.navText, currentModule === 'kyc' && styles.navTextActive]}>KYC</Text>
+                </TouchableOpacity>
+              )}
+
               <TouchableOpacity style={[styles.navBtn, currentModule === 'checkout' && styles.navBtnActive]} onPress={() => setCurrentModule('checkout')}>
                 <Text style={[styles.navText, currentModule === 'checkout' && styles.navTextActive]}>Pagos</Text>
               </TouchableOpacity>
@@ -146,14 +151,14 @@ export default function App() {
         {currentModule === 'landing' && <ConsumerLandingScreen />}
         {currentModule === 'login' && <LoginScreen />}
         {currentModule === 'register' && <RegisterScreen />}
-        {currentModule === 'kyc' && <CompanionKycScreen />}
+        {currentModule === 'kyc' && userRole !== 'cliente' && <CompanionKycScreen />}
         {currentModule === 'checkout' && <CheckoutPaymentScreen />}
         {currentModule === 'matching' && <SituationalRoomScreen />}
         {currentModule === 'rating' && <RatingReviewScreen />}
         
         {/* Vistas operativas protegidas */}
         {currentModule === 'home' && (userRole === 'admin') && <AdminDashboard />}
-        {currentModule === 'client' && (userRole === 'admin') && <ClientScreen />}
+        {currentModule === 'client' && (userRole === 'admin' || userRole === 'cliente') && <ClientScreen />}
         {currentModule === 'companion' && (userRole === 'admin') && <CompanionScreen />}
         {currentModule === 'family' && (userRole === 'admin') && <FamilyPortalScreen />}
         
