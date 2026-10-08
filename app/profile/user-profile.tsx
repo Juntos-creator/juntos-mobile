@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, SafeAreaView, ScrollView, View, Text, TouchableOpacity, Alert, Linking } from 'react-native';
+import { StyleSheet, SafeAreaView, ScrollView, View, Text, TouchableOpacity, Alert, Linking, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
 import { supabase } from '../../src/services/supabase'; // Ajusta la ruta según tu estructura
 
@@ -66,7 +66,6 @@ export default function UserProfileScreen() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      // Buscar contacto de emergencia en preferencias de cuidado
       const { data } = await supabase
         .from('care_preferences')
         .select('emergency_contact')
@@ -75,7 +74,6 @@ export default function UserProfileScreen() {
 
       if (data && data.emergency_contact) {
         Alert.alert('Contacto Familiar', `Llamando a: ${data.emergency_contact}`);
-        // Aquí puedes extraer el teléfono si está formateado o disparar la llamada
       } else {
         Alert.alert('Aviso', 'No tienes un contacto de emergencia familiar registrado en tus preferencias.');
       }
@@ -84,11 +82,42 @@ export default function UserProfileScreen() {
     }
   };
 
+  // Función para Eliminar Cuenta
+  const handleDeleteAccount = () => {
+    Alert.alert(
+      '⚠️ Eliminar Cuenta',
+      '¿Estás completamente seguro de que deseas eliminar tu cuenta de JUNTOS? Esta acción borrará tus datos personales, preferencias y accesos de forma permanente.',
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        { 
+          text: 'Sí, Eliminar Definitivamente', 
+          style: 'destructive', 
+          onPress: async () => {
+            try {
+              const { data: { user } } = await supabase.auth.getUser();
+              if (!user) return;
+
+              // Nota: Para eliminar el usuario de auth.users por seguridad se suele requerir una Edge Function 
+              // o rol admin, pero aquí eliminamos los registros públicos asociados y cerramos sesión.
+              await supabase.from('profiles').delete().eq('id', user.id);
+              await supabase.auth.signOut();
+              
+              Alert.alert('Cuenta Eliminada', 'Tu cuenta ha sido dada de baja exitosamente.');
+              router.replace('/auth/login');
+            } catch (error: any) {
+              Alert.alert('Error', 'No se pudo procesar la eliminación de la cuenta.');
+            }
+          }
+        }
+      ]
+    );
+  };
+
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scrollContainer}>
+      <ScrollView contentContainerStyle={styles.scrollContainer} showsVerticalScrollIndicator={false}>
         
-        {/* Cabecera de la Marca */}
+        {/* Cabecera */}
         <View style={styles.header}>
           <Text style={styles.logoText}>JUNTOS</Text>
           <Text style={styles.title}>Mi Cuenta y Perfil</Text>
@@ -111,7 +140,7 @@ export default function UserProfileScreen() {
         </View>
 
         {/* 2. Botón de Ayuda con Call Center */}
-        <TouchableOpacity style={styles.supportButton} onPress={handleCallCallCenter}>
+        <TouchableOpacity style={styles.supportButton} activeOpacity={0.85} onPress={handleCallCallCenter}>
           <Text style={styles.supportButtonText}>🎧 Ayuda / Conectar con Call Center</Text>
         </TouchableOpacity>
 
@@ -199,20 +228,27 @@ export default function UserProfileScreen() {
           </TouchableOpacity>
         </View>
 
+        {/* 7. Zona de Peligro: Eliminar Cuenta */}
+        <View style={[styles.sectionContainer, { marginTop: 10 }]}>
+          <TouchableOpacity style={styles.deleteAccountButton} activeOpacity={0.85} onPress={handleDeleteAccount}>
+            <Text style={styles.deleteAccountButtonText}>🗑️ Eliminar Cuenta Definitivamente</Text>
+          </TouchableOpacity>
+        </View>
+
       </ScrollView>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F8FAFC' },
-  scrollContainer: { padding: 20, alignItems: 'center' },
+  container: { flex: 1, backgroundColor: '#F1F5F9' },
+  scrollContainer: { padding: 24, alignItems: 'center', paddingBottom: 40 },
   
-  header: { alignItems: 'center', marginBottom: 20, width: '100%', maxWidth: 500 },
-  logoText: { fontSize: 22, fontWeight: '900', color: '#0F172A', letterSpacing: 2, marginBottom: 4 },
+  header: { alignItems: 'center', marginBottom: 20, width: '100%', maxWidth: 700 },
+  logoText: { fontSize: 24, fontWeight: '900', color: '#0F172A', letterSpacing: 2, marginBottom: 4 },
   title: { fontSize: 18, fontWeight: '800', color: '#334155' },
 
-  card: { width: '100%', maxWidth: 500, backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#CBD5E1', borderRadius: 16, padding: 16, marginBottom: 16 },
+  card: { width: '100%', maxWidth: 700, backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#E2E8F0', borderRadius: 16, padding: 20, marginBottom: 16, ...Platform.select({ web: { boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)' } }) },
   profileRow: { flexDirection: 'row', alignItems: 'center' },
   avatarPlaceholder: { width: 56, height: 56, borderRadius: 28, backgroundColor: '#0284C7', justifyContent: 'center', alignItems: 'center' },
   avatarText: { fontSize: 24, fontWeight: '800', color: '#FFFFFF' },
@@ -221,32 +257,35 @@ const styles = StyleSheet.create({
   ratingBadge: { backgroundColor: '#FEF3C7', paddingVertical: 4, paddingHorizontal: 8, borderRadius: 6, alignSelf: 'flex-start' },
   ratingText: { fontSize: 12, fontWeight: '700', color: '#92400E' },
 
-  supportButton: { width: '100%', maxWidth: 500, backgroundColor: '#0F172A', paddingVertical: 14, borderRadius: 12, alignItems: 'center', marginBottom: 16 },
+  supportButton: { width: '100%', maxWidth: 700, backgroundColor: '#0F172A', paddingVertical: 16, borderRadius: 14, alignItems: 'center', marginBottom: 16 },
   supportButtonText: { color: '#FFFFFF', fontSize: 14, fontWeight: '700' },
 
   sectionHeader: { fontSize: 15, fontWeight: '700', color: '#1E293B', marginBottom: 10 },
   walletRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   walletLabel: { fontSize: 13, color: '#64748B' },
-  walletAmount: { fontSize: 20, fontWeight: '900', color: '#0284C7', marginTop: 2 },
+  walletAmount: { fontSize: 22, fontWeight: '900', color: '#0284C7', marginTop: 2 },
   walletButton: { backgroundColor: '#E0F2FE', paddingVertical: 8, paddingHorizontal: 16, borderRadius: 8 },
   walletButtonText: { color: '#0369A1', fontSize: 13, fontWeight: '700' },
 
-  emergencyCard: { width: '100%', maxWidth: 500, backgroundColor: '#FEF2F2', borderWidth: 1, borderColor: '#FCA5A5', borderRadius: 16, padding: 16, marginBottom: 16 },
-  emergencyTitle: { fontSize: 15, fontWeight: '800', color: '#991B1B', marginBottom: 4 },
-  emergencySubtitle: { fontSize: 12, color: '#7F1D1D', marginBottom: 12 },
-  emergencyButtonsRow: { flexDirection: 'row', gap: 10 },
-  sosButton: { flex: 1, backgroundColor: '#DC2626', paddingVertical: 12, borderRadius: 10, alignItems: 'center' },
+  emergencyCard: { width: '100%', maxWidth: 700, backgroundColor: '#FEF2F2', borderWidth: 1, borderColor: '#FCA5A5', borderRadius: 16, padding: 20, marginBottom: 16 },
+  emergencyTitle: { fontSize: 16, fontWeight: '800', color: '#991B1B', marginBottom: 4 },
+  emergencySubtitle: { fontSize: 13, color: '#7F1D1D', marginBottom: 14 },
+  emergencyButtonsRow: { flexDirection: 'row', gap: 12 },
+  sosButton: { flex: 1, backgroundColor: '#DC2626', paddingVertical: 14, borderRadius: 12, alignItems: 'center' },
   sosButtonText: { color: '#FFFFFF', fontSize: 13, fontWeight: '700' },
-  familySosButton: { flex: 1, backgroundColor: '#991B1B', paddingVertical: 12, borderRadius: 10, alignItems: 'center' },
+  familySosButton: { flex: 1, backgroundColor: '#991B1B', paddingVertical: 14, borderRadius: 12, alignItems: 'center' },
   familySosButtonText: { color: '#FFFFFF', fontSize: 13, fontWeight: '700' },
 
-  sectionContainer: { width: '100%', maxWidth: 500, marginBottom: 16 },
+  sectionContainer: { width: '100%', maxWidth: 700, marginBottom: 16 },
   sectionTitle: { fontSize: 15, fontWeight: '700', color: '#1E293B', marginBottom: 10 },
-  rowButtons: { flexDirection: 'row', gap: 10 },
-  navButton: { flex: 1, backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#CBD5E1', paddingVertical: 12, paddingHorizontal: 10, borderRadius: 12, alignItems: 'center' },
+  rowButtons: { flexDirection: 'row', gap: 12 },
+  navButton: { flex: 1, backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#E2E8F0', paddingVertical: 14, paddingHorizontal: 12, borderRadius: 14, alignItems: 'center' },
   navButtonText: { color: '#334155', fontSize: 13, fontWeight: '700', textAlign: 'center' },
 
-  configItem: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#CBD5E1', padding: 14, borderRadius: 12, marginBottom: 8 },
-  configItemText: { fontSize: 13, fontWeight: '600', color: '#334155' },
-  arrow: { fontSize: 18, color: '#94A3B8', fontWeight: '700' }
+  configItem: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#E2E8F0', padding: 16, borderRadius: 14, marginBottom: 10 },
+  configItemText: { fontSize: 14, fontWeight: '600', color: '#334155' },
+  arrow: { fontSize: 20, color: '#94A3B8', fontWeight: '700' },
+
+  deleteAccountButton: { width: '100%', backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#FECACA', paddingVertical: 16, borderRadius: 14, alignItems: 'center' },
+  deleteAccountButtonText: { color: '#DC2626', fontSize: 14, fontWeight: '700' }
 });

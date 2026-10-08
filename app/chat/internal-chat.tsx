@@ -1,65 +1,84 @@
-import React, { useState, useEffect } from 'react';
-import { StyleSheet, SafeAreaView, View, Text, TextInput, TouchableOpacity, FlatList, KeyboardAvoidingView, Platform, Alert } from 'react-native';
-import { supabase } from '../../src/services/supabase'; // Ajusta la ruta según tu estructura
+import React, { useState, useEffect, useRef } from 'react';
+import { StyleSheet, SafeAreaView, View, Text, TextInput, TouchableOpacity, FlatList, KeyboardAvoidingView, Platform } from 'react-native';
+import { useRouter } from 'expo-router';
+import { supabase } from '../../src/services/supabase';
 
 export default function InternalChatScreen() {
+  const router = useRouter();
   const [messages, setMessages] = useState<any[]>([]);
-  const [newMessage, setNewMessage] = useState('');
-  const [loading, setLoading] = useState(true);
+  const [inputText, setInputText] = useState('');
   const [currentUser, setCurrentUser] = useState<any>(null);
+  const flatListRef = useRef<FlatList>(null);
 
   useEffect(() => {
-    initChat();
+    fetchUserAndMessages();
+
+    // Suscripción en tiempo real a nuevos mensajes
+    const channel = supabase
+      .channel('public:chat_messages')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'chat_messages' }, (payload) => {
+        setMessages((prev) => [...prev, payload.new]);
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
-  const initChat = async () => {
+  const fetchUserAndMessages = async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
       setCurrentUser(user);
 
-      // Cargar mensajes existentes
-      const { data, error } = await supabase
+      // Obtener perfil para el nombre del emisor
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('full_name')
+        .eq('id', user.id)
+        .single();
+
+      // Cargar historial de mensajes
+      const { data: chatData, error } = await supabase
         .from('chat_messages')
         .select('*')
         .order('created_at', { ascending: true });
 
-      if (data) setMessages(data);
-
-      // Suscribirse a mensajes en tiempo real (Supabase Realtime)
-      const channel = supabase
-        .channel('public:chat_messages')
-        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'chat_messages' }, (payload) => {
-          setMessages((prev) => [...prev, payload.new]);
-        })
-        .subscribe();
-
-      return () => {
-        supabase.removeChannel(channel);
-      };
+      if (chatData) {
+        setMessages(chatData);
+      }
     } catch (error) {
-      console.error('Error al inicializar el chat:', error);
-    } finally {
-      setLoading(false);
+      console.error('Error al cargar chat:', error);
     }
   };
 
   const handleSendMessage = async () => {
-    if (!newMessage.trim() || !currentUser) return;
+    if (!inputText.trim() || !currentUser) return;
 
     try {
-      const messagePayload = {
-        sender_id: currentUser.id,
-        message: newMessage.trim(),
-        created_at: new Date().toISOString(),
-      };
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('full_name')
+        .eq('id', currentUser.id)
+        .single();
 
-      const { error } = await supabase.from('chat_messages').insert([messagePayload]);
-      if (error) throw error;
+      const senderName = profile?.full_name || 'Usuario JUNTOS';
 
-      setNewMessage('');
-    } catch (error: any) {
-      Alert.alert('Error', 'No se pudo enviar el mensaje.');
+      const { error } = await supabase.from('chat_messages').insert([
+        {
+          user_id: currentUser.id,
+          sender_name: senderName,
+          message: inputText.trim(),
+          is_admin: false
+        }
+      ]);
+
+      if (!error) {
+        setInputText('');
+      }
+    } catch (error) {
+      console.error('Error al enviar mensaje:', error);
     }
   };
 
@@ -67,29 +86,37 @@ export default function InternalChatScreen() {
     <SafeAreaView style={styles.container}>
       <KeyboardAvoidingView 
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'} 
-        style={styles.keyboardContainer}
+        style={styles.container}
       >
-        
         {/* Cabecera del Chat */}
         <View style={styles.header}>
-          <Text style={styles.logoText}>JUNTOS</Text>
-          <Text style={styles.title}>Chat de Asistencia</Text>
-          <Text style={styles.subtitle}>Comunicación directa con tu acompañante asignado.</Text>
+          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+            <Text style={styles.backButtonText}>‹ Volver</Text>
+          </TouchableOpacity>
+          <View style={styles.headerTitleContainer}>
+            <Text style={styles.headerTitle}>💬 Chat de Agencia JUNTOS</Text>
+            <Text style={styles.headerSub}>Soporte y Coordinación en Vivo</Text>
+          </View>
         </View>
 
-        {/* Listado de Mensajes */}
+        {/* Lista de Mensajes */}
         <FlatList
+          ref={flatListRef}
           data={messages}
-          keyExtractor={(item) => item.id || item.created_at}
+          keyExtractor={(item) => item.id}
           contentContainerStyle={styles.chatList}
+          onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
           renderItem={({ item }) => {
-            const isMe = currentUser && item.sender_id === currentUser.id;
+            const isMe = item.user_id === currentUser?.id;
             return (
               <View style={[styles.messageBubble, isMe ? styles.myMessage : styles.otherMessage]}>
-                <Text style={[styles.messageText, isMe ? styles.myMessageText : styles.otherMessageText]}>
+                <Text style={[styles.senderName, isMe ? { color: '#E0F2FE' } : { color: '#0284C7' }]}>
+                  {item.sender_name}
+                </Text>
+                <Text style={[styles.messageText, isMe ? { color: '#FFFFFF' } : { color: '#1E293B' }]}>
                   {item.message}
                 </Text>
-                <Text style={[styles.messageTime, isMe ? styles.myMessageTime : styles.otherMessageTime]}>
+                <Text style={[styles.timestamp, isMe ? { color: '#BAE6FD' } : { color: '#94A3B8' }]}>
                   {new Date(item.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                 </Text>
               </View>
@@ -101,10 +128,10 @@ export default function InternalChatScreen() {
         <View style={styles.inputContainer}>
           <TextInput
             style={styles.textInput}
-            placeholder="Escribe un mensaje..."
+            placeholder="Escribe tu mensaje a la agencia..."
             placeholderTextColor="#94A3B8"
-            value={newMessage}
-            onChangeText={setNewMessage}
+            value={inputText}
+            onChangeText={setInputText}
           />
           <TouchableOpacity style={styles.sendButton} onPress={handleSendMessage}>
             <Text style={styles.sendButtonText}>Enviar</Text>
@@ -117,28 +144,24 @@ export default function InternalChatScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#FFFFFF' },
-  keyboardContainer: { flex: 1 },
-  header: { padding: 16, alignItems: 'center', borderBottomWidth: 1, borderBottomColor: '#E2E8F0', backgroundColor: '#F8FAFC' },
-  logoText: { fontSize: 18, fontWeight: '900', color: '#0F172A', letterSpacing: 2, marginBottom: 2 },
-  title: { fontSize: 16, fontWeight: '800', color: '#1E293B' },
-  subtitle: { fontSize: 12, color: '#64748B' },
+  container: { flex: 1, backgroundColor: '#F8FAFC' },
+  header: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#FFFFFF', paddingVertical: 14, paddingHorizontal: 16, borderBottomWidth: 1, borderBottomColor: '#E2E8F0' },
+  backButton: { marginRight: 12, paddingVertical: 4, paddingHorizontal: 8 },
+  backButtonText: { fontSize: 16, fontWeight: '700', color: '#0284C7' },
+  headerTitleContainer: { flex: 1 },
+  headerTitle: { fontSize: 16, fontWeight: '800', color: '#0F172A' },
+  headerSub: { fontSize: 12, color: '#64748B' },
 
-  chatList: { padding: 16, flexGrow: 1, justifyContent: 'flex-end' },
-  messageBubble: { maxWidth: '80%', padding: 12, borderRadius: 12, marginBottom: 10 },
-  myMessage: { alignSelf: 'flex-end', backgroundColor: '#0284C7' },
-  otherMessage: { alignSelf: 'flex-start', backgroundColor: '#F1F5F9', borderWidth: 1, borderColor: '#CBD5E1' },
-  
+  chatList: { padding: 16, paddingBottom: 20 },
+  messageBubble: { maxWidth: '75%', padding: 12, borderRadius: 14, marginBottom: 12, shadowColor: '#000', shadowOpacity: 0.03, shadowRadius: 3, elevation: 1 },
+  myMessage: { alignSelf: 'flex-end', backgroundColor: '#0284C7', borderBottomRightRadius: 2 },
+  otherMessage: { alignSelf: 'flex-start', backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#E2E8F0', borderBottomLeftRadius: 2 },
+  senderName: { fontSize: 11, fontWeight: '800', marginBottom: 2 },
   messageText: { fontSize: 14, lineHeight: 18 },
-  myMessageText: { color: '#FFFFFF' },
-  otherMessageText: { color: '#0F172A' },
+  timestamp: { fontSize: 10, marginTop: 4, alignSelf: 'flex-end' },
 
-  messageTime: { fontSize: 10, marginTop: 4, alignSelf: 'flex-end' },
-  myMessageTime: { color: '#BAE6FD' },
-  otherMessageTime: { color: '#64748B' },
-
-  inputContainer: { flexDirection: 'row', padding: 12, borderTopWidth: 1, borderTopColor: '#E2E8F0', backgroundColor: '#FFFFFF', alignItems: 'center' },
-  textInput: { flex: 1, backgroundColor: '#F8FAFC', borderWidth: 1, borderColor: '#CBD5E1', borderRadius: 20, paddingHorizontal: 16, paddingVertical: 10, fontSize: 14, color: '#0F172A', marginRight: 8 },
-  sendButton: { backgroundColor: '#0F172A', paddingVertical: 10, paddingHorizontal: 20, borderRadius: 20, justifyContent: 'center', alignItems: 'center' },
+  inputContainer: { flexDirection: 'row', padding: 12, backgroundColor: '#FFFFFF', borderTopWidth: 1, borderTopColor: '#E2E8F0', alignItems: 'center' },
+  textInput: { flex: 1, backgroundColor: '#F1F5F9', borderWidth: 1, borderColor: '#CBD5E1', borderRadius: 20, paddingHorizontal: 16, paddingVertical: 10, fontSize: 14, color: '#0F172A', maxHeight: 100 },
+  sendButton: { backgroundColor: '#0284C7', paddingVertical: 10, paddingHorizontal: 20, borderRadius: 20, marginLeft: 10, justifyContent: 'center', alignItems: 'center' },
   sendButtonText: { color: '#FFFFFF', fontSize: 14, fontWeight: '700' }
 });
