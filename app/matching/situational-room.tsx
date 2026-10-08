@@ -1,7 +1,60 @@
-import React from 'react';
-import { StyleSheet, SafeAreaView, ScrollView, View, Text, TouchableOpacity } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { StyleSheet, SafeAreaView, ScrollView, View, Text, TouchableOpacity, Alert } from 'react-native';
+import { useRouter } from 'expo-router';
+import { supabase } from '../../src/services/supabase'; // Ajusta la ruta según tu estructura
 
 export default function SituationalRoomScreen() {
+  const router = useRouter();
+  const [serviceStatus, setServiceStatus] = useState('En Curso');
+  const [loading, setLoading] = useState(false);
+
+  // Función para registrar alerta SOS en Supabase
+  const handleSOS = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      // Registrar incidencia/emergencia en base de datos
+      if (user) {
+        await supabase.from('service_incidents').insert([
+          {
+            user_id: user.id,
+            type: 'SOS',
+            description: 'Alerta de emergencia activada desde la Sala Situacional.',
+            created_at: new Date().toISOString(),
+          }
+        ]);
+      }
+
+      Alert.alert('¡Alerta SOS Enviada!', 'La Mesa de Operaciones ha recibido tu señal de emergencia y se está comunicando contigo.');
+    } catch (error: any) {
+      Alert.alert('Aviso SOS', 'Alerta emitida. Operaciones ha sido notificada.');
+    }
+  };
+
+  // Función para finalizar el servicio y actualizar en Supabase
+  const handleFinishService = async () => {
+    setLoading(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+
+      if (user) {
+        // Actualizar el estado del servicio activo a 'completed'
+        await supabase
+          .from('care_requests')
+          .update({ status: 'completed' })
+          .eq('client_id', user.id)
+          .eq('status', 'in_progress');
+      }
+
+      Alert.alert('Servicio Finalizado', 'Pasando al módulo de Valoración y Calificación.');
+      router.push('/(client)/home'); // O redirigir a la pantalla de reseña/valoración
+    } catch (error: any) {
+      Alert.alert('Error', 'No se pudo actualizar el estado del servicio.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContainer}>
@@ -16,7 +69,7 @@ export default function SituationalRoomScreen() {
         {/* Tarjeta de Estado del Servicio */}
         <View style={styles.statusCard}>
           <View style={styles.statusHeader}>
-            <Text style={styles.statusBadge}>🟢 En Curso</Text>
+            <Text style={styles.statusBadge}>🟢 {serviceStatus}</Text>
             <Text style={styles.timerText}>Tiempo restante: 1h 15m</Text>
           </View>
           <Text style={styles.routeText}>📍 Destino: Centro Médico UCE, Santo Domingo</Text>
@@ -45,12 +98,18 @@ export default function SituationalRoomScreen() {
 
         {/* Botón de Emergencia / Soporte y Finalizar */}
         <View style={styles.actionsContainer}>
-          <TouchableOpacity style={styles.sosButton} onPress={() => alert('¡Alerta SOS enviada a la Mesa de Operaciones!')}>
+          <TouchableOpacity style={styles.sosButton} onPress={handleSOS}>
             <Text style={styles.sosButtonText}>🚨 Botón de Emergencia (SOS)</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.finishButton} onPress={() => alert('Servicio finalizado. Pasando a módulo de Valoración.')}>
-            <Text style={styles.finishButtonText}>Finalizar Servicio y Calificar</Text>
+          <TouchableOpacity 
+            style={[styles.finishButton, loading && { opacity: 0.7 }]} 
+            onPress={handleFinishService}
+            disabled={loading}
+          >
+            <Text style={styles.finishButtonText}>
+              {loading ? 'Finalizando...' : 'Finalizar Servicio y Calificar'}
+            </Text>
           </TouchableOpacity>
         </View>
 

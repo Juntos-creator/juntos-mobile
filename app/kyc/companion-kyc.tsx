@@ -1,14 +1,61 @@
 import React, { useState } from 'react';
-import { StyleSheet, SafeAreaView, ScrollView, View, Text, TextInput, TouchableOpacity } from 'react-native';
+import { StyleSheet, SafeAreaView, ScrollView, View, Text, TextInput, TouchableOpacity, Alert } from 'react-native';
+import { useRouter } from 'expo-router';
+import { supabase } from '../../src/services/supabase'; // Ajusta la ruta según tu estructura
 
-export default function CompanionVerificationScreen() {
+export default function CompanionKYCScreen() {
+  const router = useRouter();
+  const [fullName, setFullName] = useState('');
+  const [cedula, setCedula] = useState('');
   const [exequatur, setExequatur] = useState('');
   const [specialty, setSpecialty] = useState('');
-  const [experience, setExperience] = useState('');
-  const [idNumber, setIdNumber] = useState('');
+  const [experienceYears, setExperienceYears] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmitVerification = () => {
-    alert(`Enviando documentos de Acompañante. Cédula: ${idNumber}, Exequatur: ${exequatur}`);
+  const handleSubmitKYC = async () => {
+    if (!fullName || !cedula || !specialty) {
+      Alert.alert('Campos incompletos', 'Por favor llena al menos tu nombre, cédula y especialidad.');
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+
+      if (userError || !user) {
+        throw new Error('Debes iniciar sesión para enviar tu verificación KYC.');
+      }
+
+      // Guardar o actualizar la información KYC en la tabla correspondiente (ej: companion_kyc)
+      const { error: kycError } = await supabase
+        .from('companion_kyc')
+        .upsert([
+          {
+            user_id: user.id,
+            full_name: fullName,
+            cedula: cedula,
+            exequatur: exequatur || 'N/A',
+            specialty: specialty,
+            experience_years: parseInt(experienceYears) || 0,
+            status: 'pending_review', // Pendiente de revisión por RRHH / Legal
+            submitted_at: new Date().toISOString(),
+          }
+        ], { onConflict: 'user_id' });
+
+      if (kycError) throw kycError;
+
+      Alert.alert(
+        '¡Documentos enviados!', 
+        'Tu expediente ha sido enviado al equipo de RRHH y Legal para su validación. Te notificaremos cuando tu cuenta esté aprobada.'
+      );
+      
+      router.replace('/auth/login'); // O redirigir a una pantalla de espera/estatus
+    } catch (error: any) {
+      Alert.alert('Error de envío', error.message || 'No se pudo registrar la información KYC.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -18,61 +65,80 @@ export default function CompanionVerificationScreen() {
         {/* Cabecera */}
         <View style={styles.header}>
           <Text style={styles.logoText}>JUNTOS</Text>
-          <Text style={styles.title}>Verificación de tu Perfil</Text>
-          <Text style={styles.subtitle}>Completa tus datos para validar tu cuenta y comenzar a brindar acompañamiento</Text>
+          <Text style={styles.title}>Verificación KYC - Acompañante</Text>
+          <Text style={styles.subtitle}>Completa tus datos profesionales para unirte a nuestra red certificada.</Text>
         </View>
 
-        {/* Formulario */}
+        {/* Formulario KYC */}
         <View style={styles.formContainer}>
-          <Text style={styles.label}>Número de Cédula o Documento de Identidad</Text>
-          <TextInput 
-            style={styles.input} 
-            placeholder="001-0000000-0" 
-            placeholderTextColor="#94A3B8"
-            value={idNumber}
-            onChangeText={setIdNumber}
-          />
-
-          <Text style={styles.label}>Número de Exequatur / Licencia Profesional</Text>
-          <TextInput 
-            style={styles.input} 
-            placeholder="Ej. 12345 (Si aplica)" 
-            placeholderTextColor="#94A3B8"
-            value={exequatur}
-            onChangeText={setExequatur}
-          />
-
-          <Text style={styles.label}>Especialidad o Área de Cuidado</Text>
-          <TextInput 
-            style={styles.input} 
-            placeholder="Ej. Enfermería Geriátrica / Cuidados en Casa" 
-            placeholderTextColor="#94A3B8"
-            value={specialty}
-            onChangeText={setSpecialty}
-          />
-
-          <Text style={styles.label}>Años de Experiencia Comprobable</Text>
-          <TextInput 
-            style={styles.input} 
-            placeholder="Ej. 5 años" 
-            placeholderTextColor="#94A3B8"
-            value={experience}
-            onChangeText={setExperience}
-            keyboardType="numeric"
-          />
-
-          {/* Sección de carga de documentos */}
-          <View style={styles.uploadBox}>
-            <Text style={styles.uploadTitle}>📄 Documentación de Respaldo</Text>
-            <Text style={styles.uploadDesc}>Sube una foto de tu Cédula, Exequatur y Certificado de Buena Conducta.</Text>
-            <TouchableOpacity style={styles.uploadBtn} onPress={() => alert('Seleccionar archivos de respaldo')}>
-              <Text style={styles.uploadBtnText}>Adjuntar Archivos</Text>
-            </TouchableOpacity>
+          
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Nombre Completo</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Ej. Dra. Ana Martínez"
+              placeholderTextColor="#94A3B8"
+              value={fullName}
+              onChangeText={setFullName}
+            />
           </View>
 
-          <TouchableOpacity style={styles.submitButton} onPress={handleSubmitVerification}>
-            <Text style={styles.submitButtonText}>Enviar para revisión</Text>
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Cédula de Identidad</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="001-0000000-0"
+              placeholderTextColor="#94A3B8"
+              value={cedula}
+              onChangeText={setCedula}
+              keyboardType="numeric"
+            />
+          </View>
+
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Número de Exequatur (Médicos / Enfermería)</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Ej. 12345"
+              placeholderTextColor="#94A3B8"
+              value={exequatur}
+              onChangeText={setExequatur}
+            />
+          </View>
+
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Especialidad / Área de Cuidado</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Ej. Enfermera Geriátrica / Acompañante Clínico"
+              placeholderTextColor="#94A3B8"
+              value={specialty}
+              onChangeText={setSpecialty}
+            />
+          </View>
+
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Años de Experiencia</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Ej. 5"
+              placeholderTextColor="#94A3B8"
+              value={experienceYears}
+              onChangeText={setExperienceYears}
+              keyboardType="numeric"
+            />
+          </View>
+
+          <TouchableOpacity 
+            style={[styles.submitButton, loading && { opacity: 0.7 }]} 
+            onPress={handleSubmitKYC}
+            disabled={loading}
+          >
+            <Text style={styles.submitButtonText}>
+              {loading ? 'Enviando expediente...' : 'Enviar para Revisión (RRHH & Legal)'}
+            </Text>
           </TouchableOpacity>
+
         </View>
 
       </ScrollView>
@@ -82,22 +148,17 @@ export default function CompanionVerificationScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#FFFFFF' },
-  scrollContainer: { padding: 24, justifyContent: 'center', alignItems: 'center' },
-  header: { alignItems: 'center', marginBottom: 24, width: '100%', maxWidth: 450 },
-  logoText: { fontSize: 24, fontWeight: '900', color: '#0F172A', letterSpacing: 2, marginBottom: 12 },
-  title: { fontSize: 22, fontWeight: '800', color: '#1E293B', marginBottom: 6, textAlign: 'center' },
-  subtitle: { fontSize: 14, color: '#64748B', textAlign: 'center' },
+  scrollContainer: { padding: 24, alignItems: 'center' },
+  header: { alignItems: 'center', marginBottom: 24, width: '100%', maxWidth: 500 },
+  logoText: { fontSize: 24, fontWeight: '900', color: '#0F172A', letterSpacing: 2, marginBottom: 8 },
+  title: { fontSize: 22, fontWeight: '800', color: '#1E293B', marginBottom: 4, textAlign: 'center' },
+  subtitle: { fontSize: 14, color: '#64748B', textAlign: 'center', paddingHorizontal: 10 },
   
-  formContainer: { width: '100%', maxWidth: 450 },
-  label: { fontSize: 13, fontWeight: '600', color: '#334155', marginBottom: 8 },
-  input: { backgroundColor: '#F8FAFC', borderWidth: 1, borderColor: '#CBD5E1', borderRadius: 12, paddingHorizontal: 16, paddingVertical: 12, fontSize: 14, color: '#0F172A', marginBottom: 16 },
-  
-  uploadBox: { backgroundColor: '#F1F5F9', borderWidth: 1, borderStyle: 'dashed', borderColor: '#94A3B8', borderRadius: 12, padding: 16, alignItems: 'center', marginBottom: 20 },
-  uploadTitle: { fontSize: 14, fontWeight: '700', color: '#1E293B', marginBottom: 4 },
-  uploadDesc: { fontSize: 12, color: '#64748B', textAlign: 'center', marginBottom: 12 },
-  uploadBtn: { backgroundColor: '#E2E8F0', paddingVertical: 8, paddingHorizontal: 16, borderRadius: 8 },
-  uploadBtnText: { fontSize: 12, fontWeight: '700', color: '#334155' },
+  formContainer: { width: '100%', maxWidth: 500 },
+  inputGroup: { marginBottom: 16 },
+  label: { fontSize: 13, fontWeight: '700', color: '#334155', marginBottom: 8 },
+  input: { backgroundColor: '#F8FAFC', borderWidth: 1, borderColor: '#CBD5E1', borderRadius: 12, paddingHorizontal: 16, paddingVertical: 12, fontSize: 14, color: '#0F172A' },
 
-  submitButton: { backgroundColor: '#0284C7', paddingVertical: 14, borderRadius: 12, alignItems: 'center' },
+  submitButton: { backgroundColor: '#0284C7', paddingVertical: 16, borderRadius: 12, alignItems: 'center', marginTop: 12 },
   submitButtonText: { color: '#FFFFFF', fontSize: 15, fontWeight: '700' }
 });

@@ -27,16 +27,41 @@ export default function LoginScreen() {
     setLoading(true);
 
     try {
-      // 2. Inicio de sesión real en Supabase Auth
-      const { data, error } = await supabase.auth.signInWithPassword({
+      // 1. Inicio de sesión real en Supabase Auth
+      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
-      if (error) throw error;
+      if (authError) throw authError;
 
-      Alert.alert('¡Bienvenido!', 'Has iniciado sesión correctamente.');
-      router.replace('/(client)/home'); // O redirigir según el rol del usuario
+      const user = authData.user;
+
+      if (user) {
+        // 2. Consultar el rol (user_type) en la tabla profiles que creamos en Supabase
+        const { data: profileData, error: profileError } = await supabase
+          .from('profiles')
+          .select('user_type')
+          .eq('id', user.id)
+          .single();
+
+        if (profileError) {
+          console.error('Error al obtener perfil:', profileError.message);
+        }
+
+        const userType = profileData?.user_type || 'cliente';
+
+        Alert.alert('¡Bienvenido!', 'Has iniciado sesión correctamente.');
+
+        // 3. Redirección dinámica basada en el rol de la base de datos
+        if (userType === 'acompanante') {
+          router.replace('/kyc/companion-kyc');
+        } else if (userType === 'admin') {
+          router.replace('/operaciones/AdminDashboard');
+        } else {
+          router.replace('/(client)/home');
+        }
+      }
     } catch (error: any) {
       Alert.alert('Error de inicio de sesión', error.message || 'Credenciales inválidas.');
     } finally {

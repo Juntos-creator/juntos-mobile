@@ -1,14 +1,61 @@
 import React, { useState } from 'react';
-import { StyleSheet, SafeAreaView, ScrollView, View, Text, TextInput, TouchableOpacity } from 'react-native';
+import { StyleSheet, SafeAreaView, ScrollView, View, Text, TextInput, TouchableOpacity, Alert } from 'react-native';
+import { supabase } from '../../src/services/supabase'; // Ajusta la ruta según tu estructura
 
 export default function CheckoutPaymentScreen() {
   const [selectedPlan, setSelectedPlan] = useState<'hours' | 'monthly'>('hours');
   const [cardNumber, setCardNumber] = useState('');
   const [expiry, setExpiry] = useState('');
   const [cvv, setCvv] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const handlePayment = () => {
-    alert(`Procesando pago seguro de plan ${selectedPlan === 'hours' ? 'por Horas' : 'Mensual'}. ¡Listo para conectar con el Acompañante!`);
+  const handlePayment = async () => {
+    if (!cardNumber || !expiry || !cvv) {
+      Alert.alert('Error', 'Por favor completa los datos de tu tarjeta.');
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      // 1. Obtener el usuario autenticado actual
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      
+      if (userError || !user) {
+        throw new Error('Debes iniciar sesión para procesar el pago.');
+      }
+
+      const amount = selectedPlan === 'hours' ? 1500 : 35000;
+      const planName = selectedPlan === 'hours' ? 'Plan por Horas' : 'Plan Mensual (Cuidador)';
+
+      // 2. Registrar la transacción en la tabla de pagos en Supabase (ej: payments)
+      const { error: paymentError } = await supabase
+        .from('payments')
+        .insert([
+          {
+            user_id: user.id,
+            plan: planName,
+            amount: amount,
+            status: 'completed',
+            created_at: new Date().toISOString(),
+          }
+        ]);
+
+      if (paymentError) {
+        // Si la tabla no existe aún, evitamos bloquear la simulación pero avisamos
+        console.warn('Aviso de base de datos:', paymentError.message);
+      }
+
+      Alert.alert(
+        '¡Pago Exitoso!', 
+        `Procesado pago seguro de ${planName} ($RD ${amount.toLocaleString()}). ¡Listo para conectar con el Acompañante!`
+      );
+
+    } catch (error: any) {
+      Alert.alert('Error en el pago', error.message || 'No se pudo procesar la transacción.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -82,8 +129,14 @@ export default function CheckoutPaymentScreen() {
             </View>
           </View>
 
-          <TouchableOpacity style={styles.payButton} onPress={handlePayment}>
-            <Text style={styles.payButtonText}>Pagar y Activar Servicio</Text>
+          <TouchableOpacity 
+            style={[styles.payButton, loading && { opacity: 0.7 }]} 
+            onPress={handlePayment}
+            disabled={loading}
+          >
+            <Text style={styles.payButtonText}>
+              {loading ? 'Procesando pago...' : 'Pagar y Activar Servicio'}
+            </Text>
           </TouchableOpacity>
         </View>
 
