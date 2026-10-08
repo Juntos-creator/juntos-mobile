@@ -12,7 +12,7 @@ export default function ConsumerLandingScreen() {
           <Text style={styles.brandSubtitle}>Agencia de Acompañamiento y Cuidado No Clínico</Text>
         </View>
 
-        {/* Hero Section con Imagen Emotiva de Acompañamiento No Clínico */}
+        {/* Hero Section con Imagen de Adulto Mayor en el Parque */}
         <View style={styles.heroContainer}>
           <View style={styles.heroTextContainer}>
             <Text style={styles.heroTitle}>Compañía, calidez y bienestar para el adulto mayor</Text>
@@ -21,15 +21,15 @@ export default function ConsumerLandingScreen() {
             </Text>
           </View>
           <View style={styles.imageCard}>
-            {/* Imagen actualizada de acompañamiento no clínico / manos entrelazadas o apoyo cálido */}
+            {/* Imagen actualizada: Adulto mayor disfrutando en el parque */}
             <Image 
-              source={{ uri: 'https://images.unsplash.com/photo-1516307365426-fea5917df884?q=80&w=800&auto=format&fit=crop' }} 
+              source={{ uri: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?q=80&w=800&auto=format&fit=crop' }} 
               style={styles.careImage}
               resizeMode="cover"
             />
             <View style={styles.imageOverlayText}>
-              <Text style={styles.overlayTextTitle}>Acompañamiento Digno y Cercano</Text>
-              <Text style={styles.overlayTextSubtitle}>Más que asistencia, una compañía sincera</Text>
+              <Text style={styles.overlayTextTitle}>Bienestar y Vida al Aire Libre</Text>
+              <Text style={styles.overlayTextSubtitle}>Momentos de paz y compañía en cada paseo</Text>
             </View>
           </View>
         </View>
@@ -52,13 +52,13 @@ export default function ConsumerLandingScreen() {
             </View>
 
             <View style={styles.featureCard}>
-              <Text style={styles.featureCardTitle}>📍 Monitoreo y Sala Situacional</Text>
-              <Text style={styles.featureCardText}>Seguimiento en tiempo real de los servicios activos y reportes de llegada para mantener informados a los familiares en todo momento.</Text>
+              <Text style={styles.featureCardTitle}>📱 Monitoreo y Tranquilidad</Text>
+              <Text style={styles.featureCardText}>Reportes continuos de llegada y seguimiento constante del servicio para mantener informados a los familiares en todo momento.</Text>
             </View>
 
             <View style={styles.featureCard}>
-              <Text style={styles.featureCardTitle}>🔒 Verificación Rigurosa (KYC)</Text>
-              <Text style={styles.featureCardText}>Estrictos filtros de identidad, referencias personales y antecedentes para garantizar que cada acompañante sea 100% confiable.</Text>
+              <Text style={styles.featureCardTitle}>🛡️ Cuidadores Confiables</Text>
+              <Text style={styles.featureCardText}>Estrictos filtros de selección, revisión de antecedentes y referencias personales para garantizar absoluta seguridad.</Text>
             </View>
           </View>
         </View>
