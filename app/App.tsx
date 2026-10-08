@@ -1,22 +1,46 @@
 import React, { useState } from 'react';
 import { StyleSheet, SafeAreaView, StatusBar, View, TouchableOpacity, Text, ScrollView } from 'react-native';
 
-// Importa los módulos apuntando a la carpeta app/ donde se encuentran
-import FamilyPortalScreen from './app/FamilyPortalScreen';
-import DispatchSupportScreen from './app/DispatchSupportScreen';
-import AuditAccountingScreen from './app/AuditAccountingScreen';
-import LegalComplianceScreen from './app/LegalComplianceScreen';
+// Rutas exactas basadas en la estructura actual de la carpeta app/
+import AdminDashboard from './AdminDashboard';
+import ClientScreen from './(client)/home';
+import CompanionScreen from './(companion)/dashboard';
+import FamilyPortalScreen from './FamilyPortalScreen';
+import DispatchSupportScreen from './DispatchSupportScreen';
+import AuditAccountingScreen from './AuditAccountingScreen';
+import LegalComplianceScreen from './LegalComplianceScreen';
 
 export default function App() {
-  const [currentModule, setCurrentModule] = useState<'family' | 'dispatch' | 'audit' | 'legal'>('family');
+  const [currentModule, setCurrentModule] = useState<'home' | 'client' | 'companion' | 'family' | 'dispatch' | 'audit' | 'legal'>('home');
 
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#FFF" />
       
-      {/* Barra superior de navegación rápida entre perfiles para pruebas web */}
+      {/* Barra superior de navegación rápida entre perfiles */}
       <View style={styles.navBar}>
         <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+          <TouchableOpacity 
+            style={[styles.navBtn, currentModule === 'home' && styles.navBtnActive]} 
+            onPress={() => setCurrentModule('home')}
+          >
+            <Text style={[styles.navText, currentModule === 'home' && styles.navTextActive]}>Inicio (Admin)</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity 
+            style={[styles.navBtn, currentModule === 'client' && styles.navBtnActive]} 
+            onPress={() => setCurrentModule('client')}
+          >
+            <Text style={[styles.navText, currentModule === 'client' && styles.navTextActive]}>Cliente</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity 
+            style={[styles.navBtn, currentModule === 'companion' && styles.navBtnActive]} 
+            onPress={() => setCurrentModule('companion')}
+          >
+            <Text style={[styles.navText, currentModule === 'companion' && styles.navTextActive]}>Acompañante</Text>
+          </TouchableOpacity>
+
           <TouchableOpacity 
             style={[styles.navBtn, currentModule === 'family' && styles.navBtnActive]} 
             onPress={() => setCurrentModule('family')}
@@ -49,6 +73,9 @@ export default function App() {
 
       {/* Renderizado dinámico del módulo seleccionado */}
       <View style={styles.content}>
+        {currentModule === 'home' && <AdminDashboard />}
+        {currentModule === 'client' && <ClientScreen />}
+        {currentModule === 'companion' && <CompanionScreen />}
         {currentModule === 'family' && <FamilyPortalScreen />}
         {currentModule === 'dispatch' && <DispatchSupportScreen />}
         {currentModule === 'audit' && <AuditAccountingScreen />}
