@@ -1,14 +1,14 @@
 import React, { useState } from 'react';
 import { StyleSheet, SafeAreaView, ScrollView, View, Text, TextInput, TouchableOpacity } from 'react-native';
 
-export default function CompanionKycScreen() {
+export default function CompanionVerificationScreen() {
   const [exequatur, setExequatur] = useState('');
   const [specialty, setSpecialty] = useState('');
   const [experience, setExperience] = useState('');
   const [idNumber, setIdNumber] = useState('');
 
-  const handleSubmitKyc = () => {
-    alert(`Enviando documentos KYC de Acompañante. Cédula: ${idNumber}, Exequatur: ${exequatur}`);
+  const handleSubmitVerification = () => {
+    alert(`Enviando documentos de Acompañante. Cédula: ${idNumber}, Exequatur: ${exequatur}`);
   };
 
   return (
@@ -18,11 +18,11 @@ export default function CompanionKycScreen() {
         {/* Cabecera */}
         <View style={styles.header}>
           <Text style={styles.logoText}>JUNTOS</Text>
-          <Text style={styles.title}>Verificación KYC Profesional</Text>
-          <Text style={styles.subtitle}>Completa tus datos para validar tu perfil y comenzar a recibir servicios</Text>
+          <Text style={styles.title}>Verificación de tu Perfil</Text>
+          <Text style={styles.subtitle}>Completa tus datos para validar tu cuenta y comenzar a brindar acompañamiento</Text>
         </View>
 
-        {/* Formulario KYC */}
+        {/* Formulario */}
         <View style={styles.formContainer}>
           <Text style={styles.label}>Número de Cédula o Documento de Identidad</Text>
           <TextInput 
@@ -64,14 +64,14 @@ export default function CompanionKycScreen() {
           {/* Sección de carga de documentos */}
           <View style={styles.uploadBox}>
             <Text style={styles.uploadTitle}>📄 Documentación de Respaldo</Text>
-            <Text style={styles.uploadDesc}>Sube foto de tu Cédula, Exequatur y Certificado de Buena Conducta.</Text>
+            <Text style={styles.uploadDesc}>Sube una foto de tu Cédula, Exequatur y Certificado de Buena Conducta.</Text>
             <TouchableOpacity style={styles.uploadBtn} onPress={() => alert('Seleccionar archivos de respaldo')}>
               <Text style={styles.uploadBtnText}>Adjuntar Archivos</Text>
             </TouchableOpacity>
           </View>
 
-          <TouchableOpacity style={styles.submitButton} onPress={handleSubmitKyc}>
-            <Text style={styles.submitButtonText}>Enviar para Validación Operativa</Text>
+          <TouchableOpacity style={styles.submitButton} onPress={handleSubmitVerification}>
+            <Text style={styles.submitButtonText}>Enviar para revisión</Text>
           </TouchableOpacity>
         </View>
 
