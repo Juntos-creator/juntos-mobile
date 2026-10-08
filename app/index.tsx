@@ -6,34 +6,30 @@ export default function ConsumerLandingScreen() {
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
         
-        {/* Cabecera con Logotipo y Título de Marca */}
+        {/* Cabecera con Título de Marca */}
         <View style={styles.header}>
-          <Image 
-            source={{ uri: 'https://images.unsplash.com/photo-1584515979956-d9f6e5d09982?q=80&w=200&auto=format&fit=crop' }} // Placeholder estilizado o puedes usar la ruta de tu logo en assets
-            style={styles.logoImage}
-            resizeMode="contain"
-          />
           <Text style={styles.brandTitle}>JUNTOS</Text>
-          <Text style={styles.brandSubtitle}>Plataforma de Apoyo Geriátrico y Cuidado Médico</Text>
+          <Text style={styles.brandSubtitle}>Agencia de Acompañamiento y Cuidado No Clínico</Text>
         </View>
 
-        {/* Hero Section con Imagen Emotiva de Cuidado */}
+        {/* Hero Section con Imagen Emotiva de Acompañamiento No Clínico */}
         <View style={styles.heroContainer}>
           <View style={styles.heroTextContainer}>
-            <Text style={styles.heroTitle}>Cuidado humano y profesional para quienes más amas</Text>
+            <Text style={styles.heroTitle}>Compañía, calidez y bienestar para el adulto mayor</Text>
             <Text style={styles.heroDescription}>
-              Conectamos familias en Santo Domingo con profesionales de la salud y acompañantes geriátricos rigurosamente verificados, garantizando seguridad, empatía y tranquilidad en cada momento.
+              Conectamos a familias en Santo Domingo con acompañantes geriátricos y asistentes de confianza rigurosamente verificados. Brindamos apoyo diario, seguridad y un trato humano excepcional sin intervenciones médicas.
             </Text>
           </View>
           <View style={styles.imageCard}>
+            {/* Imagen actualizada de acompañamiento no clínico / manos entrelazadas o apoyo cálido */}
             <Image 
-              source={{ uri: 'https://images.unsplash.com/photo-1576765608535-5f04d1e3f289?q=80&w=800&auto=format&fit=crop' }} 
+              source={{ uri: 'https://images.unsplash.com/photo-1516307365426-fea5917df884?q=80&w=800&auto=format&fit=crop' }} 
               style={styles.careImage}
               resizeMode="cover"
             />
             <View style={styles.imageOverlayText}>
-              <Text style={styles.overlayTextTitle}>Dignidad y Calidez en el Envejecimiento</Text>
-              <Text style={styles.overlayTextSubtitle}>Manos que cuidan, corazones que acompañan</Text>
+              <Text style={styles.overlayTextTitle}>Acompañamiento Digno y Cercano</Text>
+              <Text style={styles.overlayTextSubtitle}>Más que asistencia, una compañía sincera</Text>
             </View>
           </View>
         </View>
@@ -42,7 +38,7 @@ export default function ConsumerLandingScreen() {
         <View style={styles.sectionContainer}>
           <Text style={styles.sectionTitle}>¿Quiénes Somos?</Text>
           <Text style={styles.sectionParagraph}>
-            Somos una solución integral especializada en el bienestar de la población adulta mayor en Santo Domingo. Nuestro propósito es ofrecer un puente seguro entre las familias que necesitan asistencia médica o de acompañamiento y los profesionales de la salud más calificados del país.
+            Somos una agencia especializada en servicios de acompañamiento no clínico para la tercera edad en Santo Domingo. Nuestro objetivo principal es elevar la calidad de vida de los adultos mayores y brindar absoluta tranquilidad a sus familias a través de cuidadores profesionales, empáticos y debidamente evaluados.
           </Text>
         </View>
 
@@ -51,26 +47,26 @@ export default function ConsumerLandingScreen() {
           <Text style={styles.sectionTitle}>¿Qué Hacemos?</Text>
           <View style={styles.gridContainer}>
             <View style={styles.featureCard}>
-              <Text style={styles.featureCardTitle}>🤝 Acompañamiento Geriátrico</Text>
-              <Text style={styles.featureCardText}>Brindamos soporte diario, cuidado clínico especializado y asistencia en rutinas de la tercera edad con personal evaluado bajo estrictos estándares.</Text>
+              <Text style={styles.featureCardTitle}>🤝 Acompañamiento Diario</Text>
+              <Text style={styles.featureCardText}>Conversación, lectura, paseos recreativos, apoyo en actividades cotidianas del hogar y supervisión general con absoluta calidez humana.</Text>
             </View>
 
             <View style={styles.featureCard}>
-              <Text style={styles.featureCardTitle}>📍 Sala Situacional en Vivo</Text>
-              <Text style={styles.featureCardText}>Monitoreo en tiempo real, alertas de asistencia y seguimiento minuto a minuto de cada servicio activo para absoluta tranquilidad familiar.</Text>
+              <Text style={styles.featureCardTitle}>📍 Monitoreo y Sala Situacional</Text>
+              <Text style={styles.featureCardText}>Seguimiento en tiempo real de los servicios activos y reportes de llegada para mantener informados a los familiares en todo momento.</Text>
             </View>
 
             <View style={styles.featureCard}>
               <Text style={styles.featureCardTitle}>🔒 Verificación Rigurosa (KYC)</Text>
-              <Text style={styles.featureCardText}>Validación exhaustiva de exequatur, antecedentes médicos y de identidad para cada profesional integrado en nuestra red.</Text>
+              <Text style={styles.featureCardText}>Estrictos filtros de identidad, referencias personales y antecedentes para garantizar que cada acompañante sea 100% confiable.</Text>
             </View>
           </View>
         </View>
 
         {/* Llamado a la Acción Comercial */}
         <View style={styles.ctaContainer}>
-          <Text style={styles.ctaTitle}>¿Necesitas cuidado especializado hoy?</Text>
-          <Text style={styles.ctaSubtitle}>Únete a nuestra plataforma y experimenta la tranquilidad que tu familia merece.</Text>
+          <Text style={styles.ctaTitle}>¿Buscas un acompañante ideal para tu familiar?</Text>
+          <Text style={styles.ctaSubtitle}>Confía en nuestra red de profesionales dedicados al bienestar no clínico del adulto mayor.</Text>
           <TouchableOpacity style={styles.ctaButton}>
             <Text style={styles.ctaButtonText}>Solicitar Acompañamiento</Text>
           </TouchableOpacity>
@@ -86,7 +82,6 @@ const styles = StyleSheet.create({
   scrollContent: { padding: 20, alignItems: 'center' },
   
   header: { alignItems: 'center', marginBottom: 30, width: '100%', maxWidth: 800 },
-  logoImage: { width: 70, height: 70, borderRadius: 35, marginBottom: 10 },
   brandTitle: { fontSize: 28, fontWeight: '900', color: '#0F172A', letterSpacing: 3 },
   brandSubtitle: { fontSize: 14, fontWeight: '600', color: '#0284C7', marginTop: 4 },
 
