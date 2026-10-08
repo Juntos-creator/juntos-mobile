@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   StyleSheet,
   SafeAreaView,
@@ -9,18 +9,24 @@ import {
   TouchableOpacity,
   Platform,
 } from 'react-native';
+import { useRouter } from 'expo-router';
 
 export default function ConsumerLandingScreen() {
+  const router = useRouter();
+  const [activeRole, setActiveRole] = useState('CLIENTE');
+  const [activeTab, setActiveTab] = useState('Landing');
+
   const handleRequestService = () => {
-    console.log('Solicitar acompañamiento');
+    // Redirige al registro o formulario de solicitud
+    router.push('/register');
   };
 
   const handleRegister = () => {
-    console.log('Crear cuenta');
+    router.push('/register');
   };
 
   const handleLogin = () => {
-    console.log('Iniciar sesión');
+    router.push('/login');
   };
 
   return (
@@ -29,6 +35,46 @@ export default function ConsumerLandingScreen() {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
+
+        {/* =====================================================
+            BARRA DE SIMULACIÓN DE ROLES Y MENÚ COMERCIAL
+        ====================================================== */}
+        <View style={styles.simulationBarContainer}>
+          <View style={styles.roleSimulationRow}>
+            <Text style={styles.simLabel}>Simular Rol de Usuario: </Text>
+            {['ADMIN', 'RRHH', 'CONTABLE', 'LEGAL', 'CLIENTE', 'ACOMPANANTE'].map((role) => (
+              <TouchableOpacity
+                key={role}
+                style={[styles.roleChip, activeRole === role && styles.activeRoleChip]}
+                onPress={() => setActiveRole(role)}
+              >
+                <Text style={[styles.roleChipText, activeRole === role && styles.activeRoleChipText]}>
+                  {role}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+
+          <View style={styles.comercialMenuRow}>
+            <Text style={styles.simLabel}>COMERCIAL: </Text>
+            {['Landing', 'Login', 'Registro', 'Verificación', 'Pagos', 'Sala Situacional', 'Valoración'].map((tab) => (
+              <TouchableOpacity
+                key={tab}
+                style={[styles.comercialTab, activeTab === tab && styles.activeComercialTab]}
+                onPress={() => {
+                  setActiveTab(tab);
+                  if (tab === 'Login') router.push('/login');
+                  if (tab === 'Registro') router.push('/register');
+                  if (tab === 'Verificación') router.push('/verification');
+                }}
+              >
+                <Text style={[styles.comercialTabText, activeTab === tab && styles.activeComercialTabText]}>
+                  {tab}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
 
         {/* =====================================================
             HEADER
@@ -503,9 +549,89 @@ const styles = StyleSheet.create({
 
   scrollContent: {
     paddingHorizontal: 20,
-    paddingTop: 20,
+    paddingTop: 10,
     paddingBottom: 50,
     alignItems: 'center',
+  },
+
+  /* ================= SIMULACIÓN Y MENÚ COMERCIAL ================= */
+
+  simulationBarContainer: {
+    width: '100%',
+    maxWidth: 1180,
+    backgroundColor: '#0F172A',
+    padding: 12,
+    borderRadius: 12,
+    marginBottom: 20,
+  },
+
+  roleSimulationRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    marginBottom: 8,
+  },
+
+  comercialMenuRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    borderTopWidth: 1,
+    borderTopColor: '#1E293B',
+    paddingTop: 8,
+  },
+
+  simLabel: {
+    color: '#94A3B8',
+    fontSize: 11,
+    fontWeight: '700',
+    marginRight: 8,
+  },
+
+  roleChip: {
+    backgroundColor: '#1E293B',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+    marginRight: 6,
+    marginBottom: 4,
+  },
+
+  activeRoleChip: {
+    backgroundColor: '#0284C7',
+  },
+
+  roleChipText: {
+    color: '#CBD5E1',
+    fontSize: 10,
+    fontWeight: '700',
+  },
+
+  activeRoleChipText: {
+    color: '#FFFFFF',
+  },
+
+  comercialTab: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+    marginRight: 6,
+    marginBottom: 4,
+  },
+
+  activeComercialTab: {
+    backgroundColor: '#0284C7',
+  },
+
+  comercialTabText: {
+    color: '#94A3B8',
+    fontSize: 11,
+    fontWeight: '600',
+  },
+
+  activeComercialTabText: {
+    color: '#FFFFFF',
+    fontWeight: '700',
   },
 
   /* ================= HEADER ================= */
