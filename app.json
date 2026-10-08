@@ -11,7 +11,8 @@
       "bundleIdentifier": "com.juntos.app",
       "infoPlist": {
         "NSLocationWhenInUseUsageDescription": "Juntos necesita tu ubicación para mostrar el seguimiento en vivo.",
-        "NSCameraUsageDescription": "Juntos usa la cámara para capturar documentos de verificación."
+        "NSCameraUsageDescription": "Juntos usa la cámara para capturar documentos de verificación.",
+        "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {
@@ -26,6 +27,11 @@
       "bundler": "metro",
       "output": "static"
     },
-    "scheme": "juntosapp"
+    "scheme": "juntosapp",
+    "extra": {
+      "eas": {
+        "projectId": "89f5e907-88c9-4f0d-b9aa-1d14b391d90c"
+      }
+    }
   }
 }
