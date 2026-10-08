@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import {
   StyleSheet,
   SafeAreaView,
@@ -13,7 +13,6 @@ import { useRouter } from 'expo-router';
 
 export default function ConsumerLandingScreen() {
   const router = useRouter();
-  const [activeRole, setActiveRole] = useState('CLIENTE');
 
   const handleRequestService = () => {
     router.push('/register');
@@ -33,26 +32,6 @@ export default function ConsumerLandingScreen() {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-
-        {/* =====================================================
-            ÚNICA BARRA DE SIMULACIÓN DE ROLES
-        ====================================================== */}
-        <View style={styles.simulationBarContainer}>
-          <View style={styles.roleSimulationRow}>
-            <Text style={styles.simLabel}>Simular Rol: </Text>
-            {['ADMIN', 'RRHH', 'CONTABLE', 'LEGAL', 'CLIENTE', 'ACOMPANANTE'].map((role) => (
-              <TouchableOpacity
-                key={role}
-                style={[styles.roleChip, activeRole === role && styles.activeRoleChip]}
-                onPress={() => setActiveRole(role)}
-              >
-                <Text style={[styles.roleChipText, activeRole === role && styles.activeRoleChipText]}>
-                  {role}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        </View>
 
         {/* =====================================================
             HEADER
@@ -527,57 +506,9 @@ const styles = StyleSheet.create({
 
   scrollContent: {
     paddingHorizontal: 20,
-    paddingTop: 10,
+    paddingTop: 20,
     paddingBottom: 50,
     alignItems: 'center',
-  },
-
-  /* ================= SIMULACIÓN DE ROLES ================= */
-
-  simulationBarContainer: {
-    width: '100%',
-    maxWidth: 1180,
-    backgroundColor: '#0F172A',
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 12,
-    marginBottom: 20,
-  },
-
-  roleSimulationRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flexWrap: 'wrap',
-  },
-
-  simLabel: {
-    color: '#94A3B8',
-    fontSize: 12,
-    fontWeight: '700',
-    marginRight: 10,
-  },
-
-  roleChip: {
-    backgroundColor: '#1E293B',
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 6,
-    marginRight: 6,
-    marginVertical: 2,
-  },
-
-  activeRoleChip: {
-    backgroundColor: '#0284C7',
-  },
-
-  roleChipText: {
-    color: '#CBD5E1',
-    fontSize: 11,
-    fontWeight: '700',
-  },
-
-  activeRoleChipText: {
-    color: '#FFFFFF',
   },
 
   /* ================= HEADER ================= */
