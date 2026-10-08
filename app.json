@@ -1,37 +1,23 @@
 {
   "expo": {
-    "name": "JUNTOS Acompañamiento",
+    "name": "Juntos",
     "slug": "juntos-mobile",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
-    "userInterfaceStyle": "automatic",
+    "icon": "./assets/images/logo.png",
+    "userInterfaceStyle": "light",
     "ios": {
-      "supportsTablet": false,
-      "bundleIdentifier": "com.juntos.app",
-      "infoPlist": {
-        "NSLocationWhenInUseUsageDescription": "Juntos necesita tu ubicación para mostrar el seguimiento en vivo.",
-        "NSCameraUsageDescription": "Juntos usa la cámara para capturar documentos de verificación.",
-        "ITSAppUsesNonExemptEncryption": false
-      }
+      "supportsTablet": true
     },
     "android": {
-      "package": "com.juntos.app",
-      "permissions": [
-        "ACCESS_FINE_LOCATION",
-        "ACCESS_COARSE_LOCATION",
-        "CAMERA"
-      ]
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/images/logo.png",
+        "backgroundColor": "#ffffff"
+      },
+      "package": "com.juntos.mobile"
     },
-    "web": {
-      "bundler": "metro",
-      "output": "static"
-    },
-    "scheme": "juntosapp",
-    "extra": {
-      "eas": {
-        "projectId": "89f5e907-88c9-4f0d-b9aa-1d14b391d90c"
-      }
-    }
+    "plugins": [
+      "expo-router"
+    ]
   }
 }
