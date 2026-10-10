@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { StyleSheet, SafeAreaView, ScrollView, View, Text, TouchableOpacity, Alert, Linking, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
-import { supabase } from '../../src/services/supabase'; // Ajusta la ruta según tu estructura
+import { supabase } from '../../src/services/supabase';
 
 export default function UserProfileScreen() {
   const router = useRouter();
@@ -9,6 +9,15 @@ export default function UserProfileScreen() {
   const [walletBalance, setWalletBalance] = useState(0);
   const [avgRating, setAvgRating] = useState('5.0');
   const [loading, setLoading] = useState(true);
+
+  const showAlert = (title: string, message: string, onOk?: () => void) => {
+    if (Platform.OS === 'web') {
+      window.alert(`${title}: ${message}`);
+      if (onOk) onOk();
+    } else {
+      Alert.alert(title, message, [{ text: 'OK', onPress: onOk }]);
+    }
+  };
 
   useEffect(() => {
     fetchUserData();
@@ -54,7 +63,7 @@ export default function UserProfileScreen() {
 
   // Acciones de Emergencia y Soporte
   const handleCallCallCenter = () => {
-    Linking.openURL('tel:8090000000'); // Número de la agencia / Call Center
+    Linking.openURL('tel:8090000000');
   };
 
   const handleCallEmergency = () => {
@@ -73,44 +82,56 @@ export default function UserProfileScreen() {
         .single();
 
       if (data && data.emergency_contact) {
-        Alert.alert('Contacto Familiar', `Llamando a: ${data.emergency_contact}`);
+        showAlert('Contacto Familiar', `Llamando a: ${data.emergency_contact}`);
       } else {
-        Alert.alert('Aviso', 'No tienes un contacto de emergencia familiar registrado en tus preferencias.');
+        showAlert('Aviso', 'No tienes un contacto de emergencia familiar registrado en tus preferencias.');
       }
     } catch (error) {
-      Alert.alert('Error', 'No se pudo obtener el contacto de emergencia.');
+      showAlert('Error', 'No se pudo obtener el contacto de emergencia.');
     }
   };
 
   // Función para Eliminar Cuenta
   const handleDeleteAccount = () => {
-    Alert.alert(
-      '⚠️ Eliminar Cuenta',
-      '¿Estás completamente seguro de que deseas eliminar tu cuenta de JUNTOS? Esta acción borrará tus datos personales, preferencias y accesos de forma permanente.',
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        { 
-          text: 'Sí, Eliminar Definitivamente', 
-          style: 'destructive', 
-          onPress: async () => {
-            try {
-              const { data: { user } } = await supabase.auth.getUser();
-              if (!user) return;
-
-              // Nota: Para eliminar el usuario de auth.users por seguridad se suele requerir una Edge Function 
-              // o rol admin, pero aquí eliminamos los registros públicos asociados y cerramos sesión.
-              await supabase.from('profiles').delete().eq('id', user.id);
-              await supabase.auth.signOut();
-              
-              Alert.alert('Cuenta Eliminada', 'Tu cuenta ha sido dada de baja exitosamente.');
-              router.replace('/auth/login');
-            } catch (error: any) {
-              Alert.alert('Error', 'No se pudo procesar la eliminación de la cuenta.');
-            }
+    if (Platform.OS === 'web') {
+      const confirmDelete = window.confirm('⚠️ Eliminar Cuenta: ¿Estás completamente seguro de que deseas eliminar tu cuenta de JUNTOS? Esta acción borrará tus datos personales de forma permanente.');
+      if (confirmDelete) {
+        processAccountDeletion();
+      }
+    } else {
+      Alert.alert(
+        '⚠️ Eliminar Cuenta',
+        '¿Estás completamente seguro de que deseas eliminar tu cuenta de JUNTOS? Esta acción borrará tus datos personales, preferencias y accesos de forma permanente.',
+        [
+          { text: 'Cancelar', style: 'cancel' },
+          { 
+            text: 'Sí, Eliminar Definitivamente', 
+            style: 'destructive', 
+            onPress: processAccountDeletion
           }
-        }
-      ]
-    );
+        ]
+      );
+    }
+  };
+
+  const processAccountDeletion = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      await supabase.from('profiles').delete().eq('id', user.id);
+      await supabase.auth.signOut();
+      
+      showAlert('Cuenta Eliminada', 'Tu cuenta ha sido dada de baja exitosamente.', () => {
+        router.replace('/auth/login');
+      });
+    } catch (error: any) {
+      showAlert('Error', 'No se pudo procesar la eliminación de la cuenta.');
+    }
+  };
+
+  const handleGoBackHome = () => {
+    router.push('/(client)/home');
   };
 
   return (
@@ -119,6 +140,9 @@ export default function UserProfileScreen() {
         
         {/* Cabecera */}
         <View style={styles.header}>
+          <TouchableOpacity onPress={handleGoBackHome} style={styles.logoMark}>
+            <Text style={styles.logoHeart}>♡</Text>
+          </TouchableOpacity>
           <Text style={styles.logoText}>JUNTOS</Text>
           <Text style={styles.title}>Mi Cuenta y Perfil</Text>
         </View>
@@ -157,6 +181,7 @@ export default function UserProfileScreen() {
             <TouchableOpacity 
               style={styles.walletButton} 
               onPress={() => router.push('/wallet/payment-wallet')}
+              activeOpacity={0.8}
             >
               <Text style={styles.walletButtonText}>Gestionar</Text>
             </TouchableOpacity>
@@ -169,11 +194,11 @@ export default function UserProfileScreen() {
           <Text style={styles.emergencySubtitle}>Uso exclusivo para situaciones urgentes durante el servicio.</Text>
           
           <View style={styles.emergencyButtonsRow}>
-            <TouchableOpacity style={styles.sosButton} onPress={handleCallEmergency}>
+            <TouchableOpacity style={styles.sosButton} onPress={handleCallEmergency} activeOpacity={0.85}>
               <Text style={styles.sosButtonText}>📞 Llamar al 911</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.familySosButton} onPress={handleCallFamilyEmergency}>
+            <TouchableOpacity style={styles.familySosButton} onPress={handleCallFamilyEmergency} activeOpacity={0.85}>
               <Text style={styles.familySosButtonText}>👨‍👩‍👧 Familiar de Emergencia</Text>
             </TouchableOpacity>
           </View>
@@ -186,6 +211,7 @@ export default function UserProfileScreen() {
             <TouchableOpacity 
               style={styles.navButton} 
               onPress={() => router.push('/notifications/push-notifications')}
+              activeOpacity={0.85}
             >
               <Text style={styles.navButtonText}>🔔 Bandeja de Notificaciones</Text>
             </TouchableOpacity>
@@ -193,6 +219,7 @@ export default function UserProfileScreen() {
             <TouchableOpacity 
               style={styles.navButton} 
               onPress={() => router.push('/chat/internal-chat')}
+              activeOpacity={0.85}
             >
               <Text style={styles.navButtonText}>💬 Chat Interno de Agencia</Text>
             </TouchableOpacity>
@@ -206,14 +233,16 @@ export default function UserProfileScreen() {
           <TouchableOpacity 
             style={styles.configItem} 
             onPress={() => router.push('/client/favorite-locations')}
+            activeOpacity={0.85}
           >
-            <Text style={styles.configItemText}>📍 Direcciones y Lugares Favoritos (Casa, Médico, etc.)</Text>
+            <Text style={styles.configItemText}>📍 Direcciones y Lugares Favoritos</Text>
             <Text style={styles.arrow}>›</Text>
           </TouchableOpacity>
 
           <TouchableOpacity 
             style={styles.configItem} 
             onPress={() => router.push('/client/care-preferences')}
+            activeOpacity={0.85}
           >
             <Text style={styles.configItemText}>📋 Preferencias y Rutinas de Cuidado</Text>
             <Text style={styles.arrow}>›</Text>
@@ -222,6 +251,7 @@ export default function UserProfileScreen() {
           <TouchableOpacity 
             style={styles.configItem} 
             onPress={() => router.push('/payments/payment-methods-config')}
+            activeOpacity={0.85}
           >
             <Text style={styles.configItemText}>💳 Métodos de Pago y Tarjetas</Text>
             <Text style={styles.arrow}>›</Text>
@@ -235,57 +265,66 @@ export default function UserProfileScreen() {
           </TouchableOpacity>
         </View>
 
+        <TouchableOpacity onPress={handleGoBackHome} style={styles.backButton}>
+          <Text style={styles.backButtonText}>← Volver al Panel Principal</Text>
+        </TouchableOpacity>
+
       </ScrollView>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F1F5F9' },
-  scrollContainer: { padding: 24, alignItems: 'center', paddingBottom: 40 },
+  container: { flex: 1, backgroundColor: '#F8FAFC' },
+  scrollContainer: { padding: 24, alignItems: 'center', flexGrow: 1, paddingBottom: 60 },
   
-  header: { alignItems: 'center', marginBottom: 20, width: '100%', maxWidth: 700 },
-  logoText: { fontSize: 24, fontWeight: '900', color: '#0F172A', letterSpacing: 2, marginBottom: 4 },
-  title: { fontSize: 18, fontWeight: '800', color: '#334155' },
+  header: { alignItems: 'center', marginBottom: 24, width: '100%', maxWidth: 700 },
+  logoMark: { width: 40, height: 40, borderRadius: 12, backgroundColor: '#E0F2FE', alignItems: 'center', justifyContent: 'center', marginBottom: 8 },
+  logoHeart: { fontSize: 24, color: '#0284C7', fontWeight: '700' },
+  logoText: { fontSize: 24, fontWeight: '900', color: '#102A43', letterSpacing: 2, marginBottom: 4 },
+  title: { fontSize: 16, fontWeight: '800', color: '#334155' },
 
-  card: { width: '100%', maxWidth: 700, backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#E2E8F0', borderRadius: 16, padding: 20, marginBottom: 16, ...Platform.select({ web: { boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)' } }) },
+  card: { width: '100%', maxWidth: 700, backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#E2E8F0', borderRadius: 16, padding: 20, marginBottom: 16, shadowColor: '#102A43', shadowOpacity: 0.03, shadowRadius: 8, elevation: 1 },
   profileRow: { flexDirection: 'row', alignItems: 'center' },
   avatarPlaceholder: { width: 56, height: 56, borderRadius: 28, backgroundColor: '#0284C7', justifyContent: 'center', alignItems: 'center' },
   avatarText: { fontSize: 24, fontWeight: '800', color: '#FFFFFF' },
-  userName: { fontSize: 16, fontWeight: '800', color: '#0F172A', marginBottom: 2 },
-  userRole: { fontSize: 13, color: '#64748B', marginBottom: 6 },
+  userName: { fontSize: 16, fontWeight: '800', color: '#102A43', marginBottom: 2 },
+  userRole: { fontSize: 13, color: '#627D98', marginBottom: 6, fontWeight: '600' },
   ratingBadge: { backgroundColor: '#FEF3C7', paddingVertical: 4, paddingHorizontal: 8, borderRadius: 6, alignSelf: 'flex-start' },
   ratingText: { fontSize: 12, fontWeight: '700', color: '#92400E' },
 
-  supportButton: { width: '100%', maxWidth: 700, backgroundColor: '#0F172A', paddingVertical: 16, borderRadius: 14, alignItems: 'center', marginBottom: 16 },
-  supportButtonText: { color: '#FFFFFF', fontSize: 14, fontWeight: '700' },
+  supportButton: { width: '100%', maxWidth: 700, backgroundColor: '#102A43', paddingVertical: 16, borderRadius: 14, alignItems: 'center', marginBottom: 16, shadowColor: '#102A43', shadowOpacity: 0.05, shadowRadius: 6, elevation: 2 },
+  supportButtonText: { color: '#FFFFFF', fontSize: 14, fontWeight: '800' },
 
-  sectionHeader: { fontSize: 15, fontWeight: '700', color: '#1E293B', marginBottom: 10 },
+  sectionHeader: { fontSize: 15, fontWeight: '800', color: '#102A43', marginBottom: 10 },
   walletRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  walletLabel: { fontSize: 13, color: '#64748B' },
+  walletLabel: { fontSize: 13, color: '#627D98', fontWeight: '600' },
   walletAmount: { fontSize: 22, fontWeight: '900', color: '#0284C7', marginTop: 2 },
   walletButton: { backgroundColor: '#E0F2FE', paddingVertical: 8, paddingHorizontal: 16, borderRadius: 8 },
-  walletButtonText: { color: '#0369A1', fontSize: 13, fontWeight: '700' },
+  walletButtonText: { color: '#0369A1', fontSize: 13, fontWeight: '800' },
 
   emergencyCard: { width: '100%', maxWidth: 700, backgroundColor: '#FEF2F2', borderWidth: 1, borderColor: '#FCA5A5', borderRadius: 16, padding: 20, marginBottom: 16 },
   emergencyTitle: { fontSize: 16, fontWeight: '800', color: '#991B1B', marginBottom: 4 },
-  emergencySubtitle: { fontSize: 13, color: '#7F1D1D', marginBottom: 14 },
+  emergencySubtitle: { fontSize: 13, color: '#7F1D1D', marginBottom: 14, fontWeight: '600' },
   emergencyButtonsRow: { flexDirection: 'row', gap: 12 },
   sosButton: { flex: 1, backgroundColor: '#DC2626', paddingVertical: 14, borderRadius: 12, alignItems: 'center' },
-  sosButtonText: { color: '#FFFFFF', fontSize: 13, fontWeight: '700' },
+  sosButtonText: { color: '#FFFFFF', fontSize: 13, fontWeight: '800' },
   familySosButton: { flex: 1, backgroundColor: '#991B1B', paddingVertical: 14, borderRadius: 12, alignItems: 'center' },
-  familySosButtonText: { color: '#FFFFFF', fontSize: 13, fontWeight: '700' },
+  familySosButtonText: { color: '#FFFFFF', fontSize: 13, fontWeight: '800' },
 
   sectionContainer: { width: '100%', maxWidth: 700, marginBottom: 16 },
-  sectionTitle: { fontSize: 15, fontWeight: '700', color: '#1E293B', marginBottom: 10 },
+  sectionTitle: { fontSize: 15, fontWeight: '800', color: '#102A43', marginBottom: 10 },
   rowButtons: { flexDirection: 'row', gap: 12 },
-  navButton: { flex: 1, backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#E2E8F0', paddingVertical: 14, paddingHorizontal: 12, borderRadius: 14, alignItems: 'center' },
-  navButtonText: { color: '#334155', fontSize: 13, fontWeight: '700', textAlign: 'center' },
+  navButton: { flex: 1, backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#E2E8F0', paddingVertical: 14, paddingHorizontal: 12, borderRadius: 14, alignItems: 'center', shadowColor: '#102A43', shadowOpacity: 0.03, shadowRadius: 6, elevation: 1 },
+  navButtonText: { color: '#334E68', fontSize: 13, fontWeight: '800', textAlign: 'center' },
 
-  configItem: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#E2E8F0', padding: 16, borderRadius: 14, marginBottom: 10 },
-  configItemText: { fontSize: 14, fontWeight: '600', color: '#334155' },
-  arrow: { fontSize: 20, color: '#94A3B8', fontWeight: '700' },
+  configItem: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#E2E8F0', padding: 16, borderRadius: 14, marginBottom: 10, shadowColor: '#102A43', shadowOpacity: 0.03, shadowRadius: 6, elevation: 1 },
+  configItemText: { fontSize: 14, fontWeight: '700', color: '#334E68' },
+  arrow: { fontSize: 20, color: '#94A3B8', fontWeight: '800' },
 
   deleteAccountButton: { width: '100%', backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#FECACA', paddingVertical: 16, borderRadius: 14, alignItems: 'center' },
-  deleteAccountButtonText: { color: '#DC2626', fontSize: 14, fontWeight: '700' }
+  deleteAccountButtonText: { color: '#DC2626', fontSize: 14, fontWeight: '800' },
+
+  backButton: { paddingVertical: 14, alignItems: 'center', marginTop: 12, width: '100%', maxWidth: 700 },
+  backButtonText: { fontSize: 14, color: '#334E68', fontWeight: '700' }
 });

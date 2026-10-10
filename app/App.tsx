@@ -148,12 +148,7 @@ export default function App() {
 
       {/* Renderizado dinámico protegido con navegación conectada */}
       <View style={styles.content}>
-        {currentModule === 'landing' && (
-          <ConsumerLandingScreen 
-            onNavigateLogin={() => setCurrentModule('login')} 
-            onNavigateRegister={() => setCurrentModule('register')} 
-          />
-        )}
+        {currentModule === 'landing' && <ConsumerLandingScreen />}
         {currentModule === 'login' && <LoginScreen />}
         {currentModule === 'register' && <RegisterScreen />}
         {currentModule === 'kyc' && userRole !== 'cliente' && <CompanionKycScreen />}

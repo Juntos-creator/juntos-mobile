@@ -1,140 +1,233 @@
 import React from 'react';
-import { StyleSheet, SafeAreaView, ScrollView, View, Text, TouchableOpacity, Platform } from 'react-native';
+import {
+  StyleSheet,
+  SafeAreaView,
+  ScrollView,
+  View,
+  Text,
+  Image,
+  TouchableOpacity,
+  Platform,
+  Alert,
+} from 'react-native';
 import { useRouter } from 'expo-router';
 import { supabase } from '../../src/services/supabase';
 
-export default function HomeScreen() {
+export default function ClientHomeScreen() {
   const router = useRouter();
 
   const handleLogout = async () => {
     try {
       await supabase.auth.signOut();
       router.replace('/auth/login');
-    } catch (error) {
-      console.error('Error al cerrar sesión:', error);
+    } catch (error: any) {
+      if (Platform.OS === 'web') {
+        window.alert('Error al cerrar sesión');
+      } else {
+        Alert.alert('Error', 'No se pudo cerrar sesión.');
+      }
     }
+  };
+
+  const handleRequestService = () => {
+    router.push('/(client)/select-companion');
   };
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scrollContainer} showsVerticalScrollIndicator={false}>
+      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         
-        {/* Barra Superior / Selector Comercial */}
-        <View style={styles.topBar}>
-          <Text style={styles.brandTitle}>JUNTOS</Text>
-          <View style={styles.navLinks}>
-            <TouchableOpacity onPress={() => router.push('/client/care-preferences')} style={styles.navLinkButton}>
-              <Text style={styles.navLinkText}>Preferencias</Text>
-            </TouchableOpacity>
-            <TouchableOpacity onPress={() => router.push('/wallet/payment-wallet')} style={styles.navLinkButton}>
-              <Text style={styles.navLinkText}>Pagos</Text>
-            </TouchableOpacity>
-            <TouchableOpacity onPress={() => router.push('/notifications/push-notifications')} style={styles.navLinkButton}>
-              <Text style={styles.navLinkText}>Notificaciones</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        {/* Cabecera Principal */}
+        {/* HEADER PRINCIPAL CON ACCESO A PORTAL FAMILIAR */}
         <View style={styles.header}>
-          <Text style={styles.mainTitle}>Panel Principal</Text>
-          <Text style={styles.subtitle}>Agencia de Acompañamiento y Asistencia Geriátrica</Text>
+          <TouchableOpacity onPress={() => router.push('/')} style={styles.logoContainer}>
+            <View style={styles.logoMark}>
+              <Text style={styles.logoHeart}>♡</Text>
+            </View>
+            <View>
+              <Text style={styles.brandTitle}>JUNTOS</Text>
+              <Text style={styles.brandSubtitle}>Compañía y Asistencia Cotidiana</Text>
+            </View>
+          </TouchableOpacity>
+
+          <View style={styles.headerActions}>
+            <TouchableOpacity 
+              style={[styles.navChip, styles.familyChip]} 
+              onPress={() => router.push('/(client)/FamilyPortalScreen')}
+            >
+              <Text style={styles.familyChipText}>👥 Portal Familiar</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity 
+              style={styles.navChip} 
+              onPress={() => router.push('/chat/internal-chat')}
+            >
+              <Text style={styles.navChipText}>💬 Chat</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity 
+              style={styles.navChip} 
+              onPress={() => router.push('/notifications/push-notifications')}
+            >
+              <Text style={styles.navChipText}>🔔 Avisos</Text>
+            </TouchableOpacity>
+          </View>
         </View>
 
-        {/* Banner Destacado: Mi Cuenta y Configuración */}
-        <TouchableOpacity 
-          style={styles.profileBanner} 
-          activeOpacity={0.85}
-          onPress={() => router.push('/profile/user-profile')}
-        >
-          <View style={styles.bannerContent}>
-            <Text style={styles.bannerTitle}>Mi Cuenta y Configuración</Text>
-            <Text style={styles.bannerSub}>Gestiona tu saldo, calificaciones, protocolos de emergencia y direcciones</Text>
+        {/* HERO BANNER COMERCIAL */}
+        <View style={styles.heroCard}>
+          <View style={styles.heroTextContent}>
+            <View style={styles.badge}>
+              <Text style={styles.badgeText}>ACOMPAÑAMIENTO NO CLÍNICO</Text>
+            </View>
+            <Text style={styles.heroTitle}>¿Qué compañía necesita hoy tu familiar?</Text>
+            <Text style={styles.heroSubtitle}>
+              Conecta en minutos con personas de confianza, evaluadas y verificadas para brindar trato humano, conversación y apoyo cotidiano.
+            </Text>
+
+            <TouchableOpacity 
+              style={styles.primaryCtaButton} 
+              onPress={handleRequestService}
+              activeOpacity={0.88}
+            >
+              <Text style={styles.primaryCtaText}>Solicitar Acompañante Ahora</Text>
+              <Text style={styles.primaryCtaArrow}>→</Text>
+            </TouchableOpacity>
           </View>
-          <View style={styles.bannerArrowContainer}>
-            <Text style={styles.arrow}>›</Text>
-          </View>
-        </TouchableOpacity>
 
-        {/* Cuadrícula de Módulos Operativos */}
-        <View style={styles.gridContainer}>
-          
-          <TouchableOpacity 
-            style={styles.gridCard} 
-            activeOpacity={0.8}
-            onPress={() => router.push('/chat/internal-chat')}
-          >
-            <View style={styles.iconContainer}>
-              <Text style={styles.cardIcon}>💬</Text>
-            </View>
-            <Text style={styles.cardTitle}>Chat de Agencia</Text>
-            <Text style={styles.cardDesc}>Comunicación directa con acompañantes</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity 
-            style={styles.gridCard} 
-            activeOpacity={0.8}
-            onPress={() => router.push('/wallet/payment-wallet')}
-          >
-            <View style={styles.iconContainer}>
-              <Text style={styles.cardIcon}>💳</Text>
-            </View>
-            <Text style={styles.cardTitle}>Billetera y Pagos</Text>
-            <Text style={styles.cardDesc}>Saldo disponible y métodos de pago</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity 
-            style={styles.gridCard} 
-            activeOpacity={0.8}
-            onPress={() => router.push('/client/care-preferences')}
-          >
-            <View style={styles.iconContainer}>
-              <Text style={styles.cardIcon}>📋</Text>
-            </View>
-            <Text style={styles.cardTitle}>Preferencias Cuidado</Text>
-            <Text style={styles.cardDesc}>Rutinas, movilidad y necesidades</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity 
-            style={styles.gridCard} 
-            activeOpacity={0.8}
-            onPress={() => router.push('/notifications/push-notifications')}
-          >
-            <View style={styles.iconContainer}>
-              <Text style={styles.cardIcon}>🔔</Text>
-            </View>
-            <Text style={styles.cardTitle}>Notificaciones</Text>
-            <Text style={styles.cardDesc}>Avisos y alertas operativas recientes</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity 
-            style={styles.gridCard} 
-            activeOpacity={0.8}
-            onPress={() => router.push('/client/favorite-locations')}
-          >
-            <View style={styles.iconContainer}>
-              <Text style={styles.cardIcon}>📍</Text>
-            </View>
-            <Text style={styles.cardTitle}>Lugares Favoritos</Text>
-            <Text style={styles.cardDesc}>Casa, médico, centros y destinos frecuentes</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity 
-            style={styles.gridCard} 
-            activeOpacity={0.8}
-            onPress={() => router.push('/matching/rating')}
-          >
-            <View style={styles.iconContainer}>
-              <Text style={styles.cardIcon}>⭐</Text>
-            </View>
-            <Text style={styles.cardTitle}>Calificar Servicio</Text>
-            <Text style={styles.cardDesc}>Evaluación de calidad de acompañamiento</Text>
-          </TouchableOpacity>
-
+          <Image
+            source={{
+              uri: 'https://images.unsplash.com/photo-1576765608535-5f04d1e3f289?q=80&w=800&auto=format&fit=crop',
+            }}
+            style={styles.heroImage}
+            resizeMode="cover"
+          />
         </View>
 
-        {/* Botón de Cerrar Sesión */}
-        <TouchableOpacity style={styles.logoutButton} activeOpacity={0.85} onPress={handleLogout}>
+        {/* CATEGORÍAS DE SERVICIOS POPULARES */}
+        <View style={styles.sectionContainer}>
+          <Text style={styles.sectionTitle}>Apoyo para la Vida Cotidiana</Text>
+          <Text style={styles.sectionSubtitle}>Servicios de asistencia recreativa, movilidad y compañía en casa</Text>
+
+          <View style={styles.servicesGrid}>
+            <TouchableOpacity style={styles.serviceCard} onPress={handleRequestService}>
+              <View style={[styles.serviceIconBg, { backgroundColor: '#E0F2FE' }]}>
+                <Text style={styles.serviceIcon}>👵</Text>
+              </View>
+              <Text style={styles.serviceTitle}>Compañía en Casa</Text>
+              <Text style={styles.serviceDesc}>Conversación, juegos de mesa, lectura y estimulación activa.</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity style={styles.serviceCard} onPress={handleRequestService}>
+              <View style={[styles.serviceIconBg, { backgroundColor: '#DCFCE7' }]}>
+                <Text style={styles.serviceIcon}>🚶‍♂️</Text>
+              </View>
+              <Text style={styles.serviceTitle}>Paseos y Movilidad</Text>
+              <Text style={styles.serviceDesc}>Caminatas tranquilas, visitas al parque y acompañamiento seguro.</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity style={styles.serviceCard} onPress={handleRequestService}>
+              <View style={[styles.serviceIconBg, { backgroundColor: '#FEF3C7' }]}>
+                <Text style={styles.serviceIcon}>🏬</Text>
+              </View>
+              <Text style={styles.serviceTitle}>Diligencias y Compras</Text>
+              <Text style={styles.serviceDesc}>Acompañamiento a supermercados, tiendas y recados personales.</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity style={styles.serviceCard} onPress={handleRequestService}>
+              <View style={[styles.serviceIconBg, { backgroundColor: '#F3E8FF' }]}>
+                <Text style={styles.serviceIcon}>📍</Text>
+              </View>
+              <Text style={styles.serviceTitle}>Acompañamiento en Eventos</Text>
+              <Text style={styles.serviceDesc}>Presencia amigable en reuniones familiares, iglesias y actividades socializadoras.</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        {/* ACOMPAÑANTES DESTACADOS Y VERIFICADOS */}
+        <View style={styles.sectionContainer}>
+          <View style={styles.sectionHeaderRow}>
+            <Text style={styles.sectionTitle}>Red de Acompañantes Verificados</Text>
+            <TouchableOpacity onPress={handleRequestService}>
+              <Text style={styles.seeAllText}>Ver todos →</Text>
+            </TouchableOpacity>
+          </View>
+
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.horizontalScroll}>
+            <View style={styles.companionCard}>
+              <Image
+                source={{ uri: 'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?q=80&w=400' }}
+                style={styles.companionPhoto}
+              />
+              <View style={styles.companionBadge}>
+                <Text style={styles.companionBadgeText}>⭐ 4.9 (48 acompañamientos)</Text>
+              </View>
+              <Text style={styles.companionName}>Ana Martínez</Text>
+              <Text style={styles.companionRole}>Especialista en Lectura y Conversación</Text>
+              <TouchableOpacity style={styles.companionBtn} onPress={handleRequestService}>
+                <Text style={styles.companionBtnText}>Reservar</Text>
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.companionCard}>
+              <Image
+                source={{ uri: 'https://images.unsplash.com/photo-1622253692010-333f2da6031d?q=80&w=400' }}
+                style={styles.companionPhoto}
+              />
+              <View style={styles.companionBadge}>
+                <Text style={styles.companionBadgeText}>⭐ 5.0 (32 acompañamientos)</Text>
+              </View>
+              <Text style={styles.companionName}>Carlos Gómez</Text>
+              <Text style={styles.companionRole}>Acompañante de Paseos y Recados</Text>
+              <TouchableOpacity style={styles.companionBtn} onPress={handleRequestService}>
+                <Text style={styles.companionBtnText}>Reservar</Text>
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.companionCard}>
+              <Image
+                source={{ uri: 'https://images.unsplash.com/photo-1594824813572-c2f8f8ef1923?q=80&w=400' }}
+                style={styles.companionPhoto}
+              />
+              <View style={styles.companionBadge}>
+                <Text style={styles.companionBadgeText}>⭐ 4.8 (19 acompañamientos)</Text>
+              </View>
+              <Text style={styles.companionName}>Laura Peralta</Text>
+              <Text style={styles.companionRole}>Apoyo en Actividades Recreativas</Text>
+              <TouchableOpacity style={styles.companionBtn} onPress={handleRequestService}>
+                <Text style={styles.companionBtnText}>Reservar</Text>
+              </TouchableOpacity>
+            </View>
+          </ScrollView>
+        </View>
+
+        {/* GESTIÓN DE CUENTA Y ACCESOS SECUNDARIOS */}
+        <View style={styles.accountSection}>
+          <Text style={styles.accountSectionTitle}>Gestión de Servicio</Text>
+          <View style={styles.accountRow}>
+            <TouchableOpacity style={styles.accountTile} onPress={() => router.push('/(client)/FamilyPortalScreen')}>
+              <Text style={styles.accountTileIcon}>📊</Text>
+              <Text style={styles.accountTileText}>Portal de Supervisión Familiar</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity style={styles.accountTile} onPress={() => router.push('/(client)/care-preferences')}>
+              <Text style={styles.accountTileIcon}>⚙️</Text>
+              <Text style={styles.accountTileText}>Preferencias del Servicio</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity style={styles.accountTile} onPress={() => router.push('/wallet/payment-wallet')}>
+              <Text style={styles.accountTileIcon}>💳</Text>
+              <Text style={styles.accountTileText}>Billetera y Métodos de Pago</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity style={styles.accountTile} onPress={() => router.push('/(client)/favorite-locations')}>
+              <Text style={styles.accountTileIcon}>📍</Text>
+              <Text style={styles.accountTileText}>Destinos Frecuentes</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        {/* BOTÓN CERRAR SESIÓN */}
+        <TouchableOpacity style={styles.logoutButton} onPress={handleLogout} activeOpacity={0.85}>
           <Text style={styles.logoutButtonText}>Cerrar Sesión Segura</Text>
         </TouchableOpacity>
 
@@ -144,33 +237,85 @@ export default function HomeScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F1F5F9' },
-  scrollContainer: { padding: 24, alignItems: 'center', paddingBottom: 40 },
+  container: { flex: 1, backgroundColor: '#F8FAFC' },
+  scrollContent: { paddingHorizontal: 20, paddingTop: 20, paddingBottom: 50, alignItems: 'center' },
+  
+  header: {
+    width: '100%',
+    maxWidth: 1180,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 24,
+  },
+  logoContainer: { flexDirection: 'row', alignItems: 'center' },
+  logoMark: { width: 46, height: 46, borderRadius: 14, backgroundColor: '#E0F2FE', alignItems: 'center', justifyContent: 'center', marginRight: 10 },
+  logoHeart: { fontSize: 28, color: '#0284C7', fontWeight: '700' },
+  brandTitle: { fontSize: 22, fontWeight: '900', color: '#102A43', letterSpacing: 2 },
+  brandSubtitle: { fontSize: 11, color: '#0284C7', fontWeight: '600' },
+  
+  headerActions: { flexDirection: 'row', gap: 8, flexWrap: 'wrap' },
+  navChip: { backgroundColor: '#FFFFFF', paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20, borderWidth: 1, borderColor: '#E2E8F0' },
+  navChipText: { fontSize: 13, fontWeight: '700', color: '#334E68' },
+  familyChip: { backgroundColor: '#E0F2FE', borderColor: '#0284C7' },
+  familyChipText: { fontSize: 13, fontWeight: '800', color: '#0284C7' },
 
-  topBar: { width: '100%', maxWidth: 900, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24, paddingBottom: 12, borderBottomWidth: 1, borderBottomColor: '#E2E8F0' },
-  brandTitle: { fontSize: 20, fontWeight: '900', color: '#0F172A', letterSpacing: 2 },
-  navLinks: { flexDirection: 'row', gap: 16 },
-  navLinkButton: { paddingVertical: 6, paddingHorizontal: 12, backgroundColor: '#FFFFFF', borderRadius: 8, borderWidth: 1, borderColor: '#CBD5E1' },
-  navLinkText: { fontSize: 13, fontWeight: '700', color: '#334155' },
+  heroCard: {
+    width: '100%',
+    maxWidth: 1180,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 24,
+    padding: 28,
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 35,
+    shadowColor: '#102A43',
+    shadowOpacity: 0.06,
+    shadowRadius: 16,
+    elevation: 3,
+  },
+  heroTextContent: { flex: 1, minWidth: 280, marginRight: 20 },
+  badge: { alignSelf: 'flex-start', backgroundColor: '#E0F2FE', paddingHorizontal: 12, paddingVertical: 5, borderRadius: 20, marginBottom: 12 },
+  badgeText: { color: '#0284C7', fontSize: 11, fontWeight: '800', letterSpacing: 1 },
+  heroTitle: { fontSize: 28, fontWeight: '900', color: '#102A43', lineHeight: 36, marginBottom: 12 },
+  heroSubtitle: { fontSize: 15, color: '#486581', lineHeight: 22, marginBottom: 20 },
+  primaryCtaButton: { backgroundColor: '#0284C7', flexDirection: 'row', alignItems: 'center', paddingVertical: 14, paddingHorizontal: 24, borderRadius: 14, alignSelf: 'flex-start' },
+  primaryCtaText: { color: '#FFFFFF', fontSize: 15, fontWeight: '800', marginRight: 8 },
+  primaryCtaArrow: { color: '#FFFFFF', fontSize: 18, fontWeight: '800' },
+  heroImage: { width: '100%', maxWidth: 360, height: 220, borderRadius: 18, marginTop: 15 },
 
-  header: { alignItems: 'center', marginBottom: 24, width: '100%', maxWidth: 900 },
-  mainTitle: { fontSize: 28, fontWeight: '900', color: '#0F172A', marginBottom: 6, letterSpacing: -0.5 },
-  subtitle: { fontSize: 14, color: '#64748B', fontWeight: '500', textAlign: 'center' },
+  sectionContainer: { width: '100%', maxWidth: 1180, marginBottom: 35 },
+  sectionHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
+  sectionTitle: { fontSize: 22, fontWeight: '900', color: '#102A43' },
+  sectionSubtitle: { fontSize: 14, color: '#627D98', marginTop: 2, marginBottom: 18 },
+  seeAllText: { fontSize: 14, fontWeight: '700', color: '#0284C7' },
 
-  profileBanner: { width: '100%', maxWidth: 900, backgroundColor: '#0284C7', borderRadius: 16, padding: 22, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 28, ...Platform.select({ ios: { shadowColor: '#0284C7', shadowOpacity: 0.25, shadowRadius: 10, shadowOffset: { width: 0, height: 4 } }, android: { elevation: 5 }, web: { boxShadow: '0 10px 15px -3px rgba(2, 132, 199, 0.2)' } }) },
-  bannerContent: { flex: 1 },
-  bannerTitle: { fontSize: 18, fontWeight: '800', color: '#FFFFFF', marginBottom: 4 },
-  bannerSub: { fontSize: 13, color: '#E0F2FE', lineHeight: 18 },
-  bannerArrowContainer: { width: 36, height: 36, borderRadius: 18, backgroundColor: 'rgba(255, 255, 255, 0.2)', justifyContent: 'center', alignItems: 'center', marginLeft: 16 },
-  arrow: { fontSize: 22, color: '#FFFFFF', fontWeight: '900', marginTop: -2 },
+  servicesGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 16 },
+  serviceCard: { flex: 1, minWidth: 240, backgroundColor: '#FFFFFF', padding: 20, borderRadius: 18, borderWidth: 1, borderColor: '#F1F5F9' },
+  serviceIconBg: { width: 48, height: 48, borderRadius: 14, alignItems: 'center', justifyContent: 'center', marginBottom: 12 },
+  serviceIcon: { fontSize: 24 },
+  serviceTitle: { fontSize: 16, fontWeight: '800', color: '#102A43', marginBottom: 6 },
+  serviceDesc: { fontSize: 13, color: '#627D98', lineHeight: 18 },
 
-  gridContainer: { width: '100%', maxWidth: 900, flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', gap: 16, marginBottom: 28 },
-  gridCard: { width: Platform.OS === 'web' ? '31%' : '48%', minWidth: 260, flexGrow: 1, backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#E2E8F0', borderRadius: 16, padding: 20, alignItems: 'flex-start', ...Platform.select({ ios: { shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 6, shadowOffset: { width: 0, height: 2 } }, android: { elevation: 2 }, web: { boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)' } }) },
-  iconContainer: { width: 48, height: 48, borderRadius: 12, backgroundColor: '#F8FAFC', borderWidth: 1, borderColor: '#E2E8F0', justifyContent: 'center', alignItems: 'center', marginBottom: 14 },
-  cardIcon: { fontSize: 24 },
-  cardTitle: { fontSize: 15, fontWeight: '800', color: '#0F172A', marginBottom: 4 },
-  cardDesc: { fontSize: 12, color: '#64748B', lineHeight: 16 },
+  horizontalScroll: { paddingRight: 20, gap: 16 },
+  companionCard: { width: 220, backgroundColor: '#FFFFFF', borderRadius: 18, padding: 16, alignItems: 'center', borderWidth: 1, borderColor: '#F1F5F9' },
+  companionPhoto: { width: 80, height: 80, borderRadius: 40, marginBottom: 10 },
+  companionBadge: { backgroundColor: '#FEF3C7', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 12, marginBottom: 8 },
+  companionBadgeText: { fontSize: 11, fontWeight: '800', color: '#D97706' },
+  companionName: { fontSize: 15, fontWeight: '800', color: '#102A43', marginBottom: 2 },
+  companionRole: { fontSize: 12, color: '#627D98', marginBottom: 14, textAlign: 'center' },
+  companionBtn: { backgroundColor: '#0284C7', paddingVertical: 8, width: '100%', borderRadius: 10, alignItems: 'center' },
+  companionBtnText: { color: '#FFFFFF', fontSize: 13, fontWeight: '700' },
 
-  logoutButton: { width: '100%', maxWidth: 900, backgroundColor: '#FEF2F2', borderWidth: 1, borderColor: '#FCA5A5', paddingVertical: 16, borderRadius: 14, alignItems: 'center' },
-  logoutButtonText: { color: '#DC2626', fontSize: 14, fontWeight: '700' }
+  accountSection: { width: '100%', maxWidth: 1180, marginBottom: 30 },
+  accountSectionTitle: { fontSize: 18, fontWeight: '800', color: '#102A43', marginBottom: 14 },
+  accountRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
+  accountTile: { flex: 1, minWidth: 200, backgroundColor: '#FFFFFF', flexDirection: 'row', alignItems: 'center', padding: 14, borderRadius: 14, borderWidth: 1, borderColor: '#E2E8F0' },
+  accountTileIcon: { fontSize: 20, marginRight: 10 },
+  accountTileText: { fontSize: 13, fontWeight: '700', color: '#334E68' },
+
+  logoutButton: { width: '100%', maxWidth: 1180, backgroundColor: '#FEF2F2', borderWidth: 1, borderColor: '#FCA5A5', paddingVertical: 14, borderRadius: 14, alignItems: 'center', marginTop: 10 },
+  logoutButtonText: { color: '#DC2626', fontSize: 14, fontWeight: '800' },
 });

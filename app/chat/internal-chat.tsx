@@ -32,13 +32,6 @@ export default function InternalChatScreen() {
       if (!user) return;
       setCurrentUser(user);
 
-      // Obtener perfil para el nombre del emisor
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('full_name')
-        .eq('id', user.id)
-        .single();
-
       // Cargar historial de mensajes
       const { data: chatData, error } = await supabase
         .from('chat_messages')
@@ -57,21 +50,22 @@ export default function InternalChatScreen() {
     if (!inputText.trim() || !currentUser) return;
 
     try {
-      const { data: profile } = await supabase
-        .from('profiles')
+      // Obtener el nombre del usuario desde la tabla centralizada public.users
+      const { data: userData } = await supabase
+        .from('users')
         .select('full_name')
         .eq('id', currentUser.id)
-        .single();
+        .maybeSingle();
 
-      const senderName = profile?.full_name || 'Usuario JUNTOS';
+      const senderName = userData?.full_name || 'Usuario JUNTOS';
 
       const { error } = await supabase.from('chat_messages').insert([
         {
           user_id: currentUser.id,
           sender_name: senderName,
           message: inputText.trim(),
-          is_admin: false
-        }
+          is_admin: false,
+        },
       ]);
 
       if (!error) {

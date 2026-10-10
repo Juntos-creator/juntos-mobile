@@ -1,24 +1,37 @@
-import { Stack } from 'expo-router';
+import { Stack, useRouter, useSegments } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { supabase } from '../src/services/supabase';
 import { View, ActivityIndicator } from 'react-native';
 
 export default function RootLayout() {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+  const segments = useSegments();
+  const router = useRouter();
 
   useEffect(() => {
-    // Verificar sesión activa en Supabase
     supabase.auth.getSession().then(({ data: { session } }) => {
       setIsAuthenticated(!!session);
     });
 
-    // Escuchar cambios de autenticación (Login / Logout)
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setIsAuthenticated(!!session);
     });
 
     return () => subscription.unsubscribe();
   }, []);
+
+  useEffect(() => {
+    if (isAuthenticated === null) return;
+
+    const inAuthGroup = segments[0] === 'auth';
+    const isLandingPage = segments.length === 0 || segments[0] === '';
+
+    if (!isAuthenticated && !inAuthGroup && !isLandingPage) {
+      router.replace('/auth/login');
+    } else if (isAuthenticated && inAuthGroup) {
+      router.replace('/(client)/home');
+    }
+  }, [isAuthenticated, segments]);
 
   if (isAuthenticated === null) {
     return (
@@ -28,26 +41,6 @@ export default function RootLayout() {
     );
   }
 
-  return (
-    <Stack screenOptions={{ headerShown: false }}>
-      {isAuthenticated ? (
-        // Rutas cuando el usuario ha iniciado sesión
-        <>
-          <Stack.Screen name="(client)/home" />
-          <Stack.Screen name="profile/user-profile" />
-          <Stack.Screen name="wallet/payment-wallet" />
-          <Stack.Screen name="payments/payment-methods-config" />
-          <Stack.Screen name="notifications/push-notifications" />
-          <Stack.Screen name="chat/internal-chat" />
-          <Stack.Screen name="client/care-preferences" />
-          <Stack.Screen name="client/favorite-locations" />
-          <Stack.Screen name="kyc/companion-kyc" />
-          <Stack.Screen name="matching/rating" />
-        </>
-      ) : (
-        // Ruta de autenticación pública
-        <Stack.Screen name="auth/login" />
-      )}
-    </Stack>
-  );
+  // Al no declarar Stack.Screen individuales innecesarios, Expo Router mapea automáticamente las carpetas
+  return <Stack screenOptions={{ headerShown: false }} />;
 }

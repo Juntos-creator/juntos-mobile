@@ -7,35 +7,22 @@ import {
   Text,
   Image,
   TouchableOpacity,
-  Platform,
 } from 'react-native';
+import { useRouter } from 'expo-router';
 
-interface ConsumerLandingProps {
-  onNavigateLogin?: () => void;
-  onNavigateRegister?: () => void;
-}
-
-export default function ConsumerLandingScreen({
-  onNavigateLogin,
-  onNavigateRegister,
-}: ConsumerLandingProps) {
+export default function ConsumerLandingScreen() {
+  const router = useRouter();
 
   const handleRequestService = () => {
-    if (onNavigateRegister) {
-      onNavigateRegister();
-    }
+    router.push('/auth/register' as any);
   };
 
   const handleRegister = () => {
-    if (onNavigateRegister) {
-      onNavigateRegister();
-    }
+    router.push('/auth/register' as any);
   };
 
   const handleLogin = () => {
-    if (onNavigateLogin) {
-      onNavigateLogin();
-    }
+    router.push('/auth/login' as any);
   };
 
   return (
@@ -44,10 +31,7 @@ export default function ConsumerLandingScreen({
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-
-        {/* =====================================================
-            HEADER
-        ====================================================== */}
+        {/* HEADER */}
         <View style={styles.header}>
           <View style={styles.logoContainer}>
             <View style={styles.logoMark}>
@@ -81,14 +65,10 @@ export default function ConsumerLandingScreen({
           </View>
         </View>
 
-        {/* =====================================================
-            HERO
-        ====================================================== */}
+        {/* HERO */}
         <View style={styles.heroContainer}>
-
           {/* TEXTO */}
           <View style={styles.heroTextContainer}>
-
             <View style={styles.heroBadge}>
               <Text style={styles.heroBadgeText}>
                 JUNTOS · PARA ADULTOS MAYORES
@@ -100,15 +80,13 @@ export default function ConsumerLandingScreen({
             </Text>
 
             <Text style={styles.heroDescription}>
-              Conectamos a familias con acompañantes de confianza,
-              previamente evaluados y verificados, para brindar compañía,
-              apoyo cotidiano y un trato humano que aporta tranquilidad
-              a toda la familia.
+              Conectamos a familias con acompañantes de confianza, previamente
+              evaluados y verificados, para brindar compañía, apoyo cotidiano y un
+              trato humano que aporta tranquilidad a toda la familia.
             </Text>
 
             {/* BENEFICIOS */}
             <View style={styles.benefitsContainer}>
-
               <View style={styles.benefitItem}>
                 <View style={[styles.benefitIcon, styles.iconBlue]}>
                   <Text style={styles.benefitIconText}>✓</Text>
@@ -118,7 +96,6 @@ export default function ConsumerLandingScreen({
                   <Text style={styles.benefitTitle}>
                     Acompañantes verificados
                   </Text>
-
                   <Text style={styles.benefitDescription}>
                     Personas evaluadas antes de formar parte de JUNTOS.
                   </Text>
@@ -134,7 +111,6 @@ export default function ConsumerLandingScreen({
                   <Text style={styles.benefitTitle}>
                     Atención personalizada
                   </Text>
-
                   <Text style={styles.benefitDescription}>
                     Servicios adaptados a las necesidades de cada familia.
                   </Text>
@@ -147,16 +123,12 @@ export default function ConsumerLandingScreen({
                 </View>
 
                 <View style={styles.benefitTextContainer}>
-                  <Text style={styles.benefitTitle}>
-                    Horarios flexibles
-                  </Text>
-
+                  <Text style={styles.benefitTitle}>Horarios flexibles</Text>
                   <Text style={styles.benefitDescription}>
                     Servicios por horas, días o de manera recurrente.
                   </Text>
                 </View>
               </View>
-
             </View>
 
             {/* CTA */}
@@ -168,25 +140,21 @@ export default function ConsumerLandingScreen({
               <Text style={styles.primaryButtonText}>
                 Solicitar acompañamiento
               </Text>
-
               <Text style={styles.primaryButtonArrow}>→</Text>
             </TouchableOpacity>
-
           </View>
 
-          {/* =====================================================
-              IMAGEN
-          ====================================================== */}
+          {/* IMAGEN */}
           <View style={styles.imageCard}>
-
             <Image
-              source={{ uri: 'https://images.unsplash.com/photo-1576765608535-5f04d1e3f289?q=80&w=800&auto=format&fit=crop' }}
+              source={{
+                uri: 'https://images.unsplash.com/photo-1576765608535-5f04d1e3f289?q=80&w=800&auto=format&fit=crop',
+              }}
               style={styles.careImage}
               resizeMode="cover"
             />
 
             <View style={styles.imageOverlay}>
-
               <View style={styles.overlayIcon}>
                 <Text style={styles.overlayIconText}>♡</Text>
               </View>
@@ -195,31 +163,20 @@ export default function ConsumerLandingScreen({
                 <Text style={styles.overlayTextTitle}>
                   Acompañamiento para adultos mayores
                 </Text>
-
                 <Text style={styles.overlayTextSubtitle}>
                   Compañía, apoyo cotidiano y bienestar.
                 </Text>
               </View>
-
             </View>
-
           </View>
-
         </View>
 
-        {/* =====================================================
-            QUIÉNES SOMOS
-        ====================================================== */}
+        {/* QUIÉNES SOMOS */}
         <View style={styles.sectionContainer}>
-
           <View style={styles.sectionHeadingRow}>
             <View style={styles.sectionAccent} />
-
             <View>
-              <Text style={styles.sectionTitle}>
-                ¿Quiénes somos?
-              </Text>
-
+              <Text style={styles.sectionTitle}>¿Quiénes somos?</Text>
               <Text style={styles.sectionSubtitle}>
                 Una nueva forma de acompañar
               </Text>
@@ -227,37 +184,27 @@ export default function ConsumerLandingScreen({
           </View>
 
           <View style={styles.aboutCard}>
-
             <Text style={styles.sectionParagraph}>
-              JUNTOS es una agencia de acompañamiento y cuidado no clínico
-              para adultos mayores. Facilitamos a las familias el acceso
-              a personas de confianza para brindar compañía, apoyo
-              cotidiano y acompañamiento personalizado.
+              JUNTOS es una agencia de acompañamiento y cuidado no clínico para
+              adultos mayores. Facilitamos a las familias el acceso a personas
+              de confianza para brindar compañía, apoyo cotidiano y
+              acompañamiento personalizado.
             </Text>
 
             <Text style={styles.sectionParagraph}>
-              Nuestro propósito es ayudar a que los adultos mayores
-              disfruten de sus actividades cotidianas con compañía,
-              respeto y dignidad, mientras sus familiares cuentan con
-              mayor tranquilidad.
+              Nuestro propósito es ayudar a que los adultos mayores disfruten de
+              sus actividades cotidianas con compañía, respeto y dignidad,
+              mientras sus familiares cuentan con mayor tranquilidad.
             </Text>
-
           </View>
         </View>
 
-        {/* =====================================================
-            QUÉ HACEMOS
-        ====================================================== */}
+        {/* QUÉ HACEMOS */}
         <View style={styles.sectionContainer}>
-
           <View style={styles.sectionHeadingRow}>
             <View style={styles.sectionAccent} />
-
             <View>
-              <Text style={styles.sectionTitle}>
-                ¿Qué hacemos?
-              </Text>
-
+              <Text style={styles.sectionTitle}>¿Qué hacemos?</Text>
               <Text style={styles.sectionSubtitle}>
                 Acompañamiento pensado para la vida cotidiana
               </Text>
@@ -265,95 +212,62 @@ export default function ConsumerLandingScreen({
           </View>
 
           <View style={styles.cardsContainer}>
-
-            {/* CARD 1 */}
             <View style={styles.featureCard}>
-
               <View style={[styles.featureIcon, styles.featureBlue]}>
                 <Text style={styles.featureIconText}>♡</Text>
               </View>
-
               <Text style={styles.featureCardTitle}>
                 Compañía y acompañamiento
               </Text>
-
               <Text style={styles.featureCardText}>
-                Conversación, lectura, paseos, actividades recreativas
-                y compañía durante las actividades cotidianas.
+                Conversación, lectura, paseos, actividades recreativas y
+                compañía durante las actividades cotidianas.
               </Text>
-
             </View>
 
-            {/* CARD 2 */}
             <View style={styles.featureCard}>
-
               <View style={[styles.featureIcon, styles.featureGreen]}>
                 <Text style={styles.featureIconText}>◷</Text>
               </View>
-
-              <Text style={styles.featureCardTitle}>
-                Servicios flexibles
-              </Text>
-
+              <Text style={styles.featureCardTitle}>Servicios flexibles</Text>
               <Text style={styles.featureCardText}>
                 Puedes solicitar servicios por horas, días o de manera
                 recurrente según las necesidades de tu familia.
               </Text>
-
             </View>
 
-            {/* CARD 3 */}
             <View style={styles.featureCard}>
-
               <View style={[styles.featureIcon, styles.featurePurple]}>
                 <Text style={styles.featureIconText}>✓</Text>
               </View>
-
-              <Text style={styles.featureCardTitle}>
-                Personas verificadas
-              </Text>
-
+              <Text style={styles.featureCardTitle}>Personas verificadas</Text>
               <Text style={styles.featureCardText}>
                 Aplicamos procesos de selección, evaluación y verificación
                 antes de incorporar acompañantes a nuestra red.
               </Text>
-
             </View>
 
-            {/* CARD 4 */}
             <View style={styles.featureCard}>
-
               <View style={[styles.featureIcon, styles.featureOrange]}>
                 <Text style={styles.featureIconText}>⌂</Text>
               </View>
-
               <Text style={styles.featureCardTitle}>
                 Tranquilidad para la familia
               </Text>
-
               <Text style={styles.featureCardText}>
                 La familia puede conocer el estado del servicio y recibir
                 información sobre el acompañamiento.
               </Text>
-
             </View>
-
           </View>
         </View>
 
-        {/* =====================================================
-            CÓMO FUNCIONA
-        ====================================================== */}
+        {/* CÓMO FUNCIONA */}
         <View style={styles.sectionContainer}>
-
           <View style={styles.sectionHeadingRow}>
             <View style={styles.sectionAccent} />
-
             <View>
-              <Text style={styles.sectionTitle}>
-                ¿Cómo funciona?
-              </Text>
-
+              <Text style={styles.sectionTitle}>¿Cómo funciona?</Text>
               <Text style={styles.sectionSubtitle}>
                 Solicitar acompañamiento es sencillo
               </Text>
@@ -361,68 +275,50 @@ export default function ConsumerLandingScreen({
           </View>
 
           <View style={styles.stepsContainer}>
-
             <Step
               number="01"
               title="Crea tu cuenta"
               description="Registra tus datos y los del adulto mayor."
             />
-
             <Step
               number="02"
               title="Solicita el servicio"
               description="Selecciona el tipo de acompañamiento, fecha y horario."
             />
-
             <Step
               number="03"
               title="JUNTOS asigna"
               description="Nuestro equipo gestiona la asignación del acompañante."
             />
-
             <Step
               number="04"
               title="Recibe el acompañamiento"
               description="El servicio comienza con registro de llegada y finalización."
             />
-
           </View>
         </View>
 
-        {/* =====================================================
-            SEGURIDAD / NO CLÍNICO
-        ====================================================== */}
+        {/* SEGURIDAD / NO CLÍNICO */}
         <View style={styles.safetyContainer}>
-
           <View style={styles.safetyIcon}>
             <Text style={styles.safetyIconText}>✓</Text>
           </View>
 
           <View style={styles.safetyTextContainer}>
-
-            <Text style={styles.safetyTitle}>
-              Acompañamiento no clínico
-            </Text>
-
+            <Text style={styles.safetyTitle}>Acompañamiento no clínico</Text>
             <Text style={styles.safetyText}>
-              JUNTOS ofrece compañía y apoyo cotidiano. No realiza
-              consultas médicas, diagnósticos, procedimientos clínicos,
-              administración de medicamentos ni servicios de enfermería.
+              JUNTOS ofrece compañía y apoyo cotidiano. No realiza consultas
+              médicas, diagnósticos, procedimientos clínicos, administración de
+              medicamentos ni servicios de enfermería.
             </Text>
-
           </View>
-
         </View>
 
-        {/* =====================================================
-            CTA FINAL
-        ====================================================== */}
+        {/* CTA FINAL */}
         <View style={styles.ctaContainer}>
-
           <Text style={styles.ctaTitle}>
             Tu familiar merece compañía y bienestar
           </Text>
-
           <Text style={styles.ctaSubtitle}>
             Permítenos ayudarte a encontrar el acompañamiento adecuado.
           </Text>
@@ -432,45 +328,25 @@ export default function ConsumerLandingScreen({
             onPress={handleRequestService}
             activeOpacity={0.85}
           >
-            <Text style={styles.ctaButtonText}>
-              Solicitar acompañamiento
-            </Text>
-
-            <Text style={styles.ctaButtonArrow}>
-              →
-            </Text>
+            <Text style={styles.ctaButtonText}>Solicitar acompañamiento</Text>
+            <Text style={styles.ctaButtonArrow}>→</Text>
           </TouchableOpacity>
-
         </View>
 
-        {/* =====================================================
-            FOOTER
-        ====================================================== */}
+        {/* FOOTER */}
         <View style={styles.footer}>
-
-          <Text style={styles.footerBrand}>
-            JUNTOS
-          </Text>
-
+          <Text style={styles.footerBrand}>JUNTOS</Text>
           <Text style={styles.footerText}>
             Acompañamiento y cuidado no clínico para adultos mayores.
           </Text>
-
           <Text style={styles.footerCopyright}>
             © {new Date().getFullYear()} JUNTOS. Todos los derechos reservados.
           </Text>
-
         </View>
-
       </ScrollView>
     </SafeAreaView>
   );
 }
-
-
-/* ============================================================
-   COMPONENTE STEP CON TIPADO ESTRICTO
-============================================================ */
 
 interface StepProps {
   number: string;
@@ -481,50 +357,29 @@ interface StepProps {
 function Step({ number, title, description }: StepProps) {
   return (
     <View style={styles.stepItem}>
-
       <View style={styles.stepNumber}>
-        <Text style={styles.stepNumberText}>
-          {number}
-        </Text>
+        <Text style={styles.stepNumberText}>{number}</Text>
       </View>
 
       <View style={styles.stepContent}>
-
-        <Text style={styles.stepTitle}>
-          {title}
-        </Text>
-
-        <Text style={styles.stepDescription}>
-          {description}
-        </Text>
-
+        <Text style={styles.stepTitle}>{title}</Text>
+        <Text style={styles.stepDescription}>{description}</Text>
       </View>
-
     </View>
   );
 }
 
-
-/* ============================================================
-   ESTILOS
-============================================================ */
-
 const styles = StyleSheet.create({
-
   container: {
     flex: 1,
     backgroundColor: '#F5F9FC',
   },
-
   scrollContent: {
     paddingHorizontal: 20,
     paddingTop: 20,
     paddingBottom: 50,
     alignItems: 'center',
   },
-
-  /* ================= HEADER ================= */
-
   header: {
     width: '100%',
     maxWidth: 1180,
@@ -534,12 +389,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 25,
   },
-
   logoContainer: {
     flexDirection: 'row',
     alignItems: 'center',
   },
-
   logoMark: {
     width: 48,
     height: 48,
@@ -549,60 +402,49 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginRight: 10,
   },
-
   logoHeart: {
     fontSize: 31,
     color: '#0284C7',
     fontWeight: '700',
   },
-
   brandTitle: {
     fontSize: 25,
     fontWeight: '900',
     color: '#102A43',
     letterSpacing: 2,
   },
-
   brandSubtitle: {
     fontSize: 11,
     color: '#0284C7',
     fontWeight: '600',
     marginTop: 2,
   },
-
   headerButtons: {
     flexDirection: 'row',
     alignItems: 'center',
   },
-
   loginButton: {
     paddingHorizontal: 18,
     paddingVertical: 11,
     marginRight: 8,
     borderRadius: 10,
   },
-
   loginButtonText: {
     color: '#334E68',
     fontSize: 14,
     fontWeight: '600',
   },
-
   registerButton: {
     backgroundColor: '#0284C7',
     paddingHorizontal: 18,
     paddingVertical: 11,
     borderRadius: 10,
   },
-
   registerButtonText: {
     color: '#FFFFFF',
     fontSize: 14,
     fontWeight: '700',
   },
-
-  /* ================= HERO ================= */
-
   heroContainer: {
     width: '100%',
     maxWidth: 1180,
@@ -610,509 +452,375 @@ const styles = StyleSheet.create({
     borderRadius: 26,
     padding: 28,
     flexDirection: 'row',
+    flexWrap: 'wrap',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 55,
-
-    ...Platform.select({
-      ios: {
-        shadowColor: '#102A43',
-        shadowOpacity: 0.08,
-        shadowRadius: 20,
-        shadowOffset: {
-          width: 0,
-          height: 8,
-        },
-      },
-
-      android: {
-        elevation: 4,
-      },
-
-      web: {
-        boxShadow: '0px 8px 30px rgba(16,42,67,0.08)',
-      },
-    }),
+    marginBottom: 30,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.05,
+    shadowRadius: 12,
+    elevation: 3,
   },
-
   heroTextContainer: {
     flex: 1,
-    paddingRight: 35,
     minWidth: 300,
+    marginRight: 20,
   },
-
   heroBadge: {
     alignSelf: 'flex-start',
     backgroundColor: '#E0F2FE',
     paddingHorizontal: 12,
-    paddingVertical: 7,
+    paddingVertical: 6,
     borderRadius: 20,
-    marginBottom: 14,
-  },
-
-  heroBadgeText: {
-    color: '#0369A1',
-    fontSize: 10,
-    fontWeight: '800',
-    letterSpacing: 0.8,
-  },
-
-  heroTitle: {
-    fontSize: 39,
-    lineHeight: 47,
-    fontWeight: '900',
-    color: '#102A43',
     marginBottom: 16,
   },
-
+  heroBadgeText: {
+    color: '#0284C7',
+    fontSize: 11,
+    fontWeight: '700',
+    letterSpacing: 1,
+  },
+  heroTitle: {
+    fontSize: 32,
+    fontWeight: '800',
+    color: '#102A43',
+    lineHeight: 40,
+    marginBottom: 16,
+  },
   heroDescription: {
     fontSize: 16,
-    lineHeight: 25,
     color: '#486581',
-    marginBottom: 25,
-    maxWidth: 600,
+    lineHeight: 24,
+    marginBottom: 24,
   },
-
-  /* ================= BENEFICIOS ================= */
-
   benefitsContainer: {
-    marginBottom: 25,
+    marginBottom: 28,
   },
-
   benefitItem: {
     flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 13,
+    alignItems: 'flex-start',
+    marginBottom: 14,
   },
-
   benefitIcon: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 11,
+    marginRight: 12,
+    marginTop: 2,
   },
-
-  iconBlue: {
-    backgroundColor: '#E0F2FE',
-  },
-
-  iconPink: {
-    backgroundColor: '#FCE7F3',
-  },
-
-  iconGreen: {
-    backgroundColor: '#DCFCE7',
-  },
-
+  iconBlue: { backgroundColor: '#E0F2FE' },
+  iconPink: { backgroundColor: '#FCE7F3' },
+  iconGreen: { backgroundColor: '#DCFCE7' },
   benefitIconText: {
-    fontSize: 20,
+    fontSize: 14,
+    fontWeight: '700',
     color: '#0284C7',
-    fontWeight: '800',
   },
-
   benefitTextContainer: {
     flex: 1,
   },
-
   benefitTitle: {
-    fontSize: 14,
-    fontWeight: '800',
+    fontSize: 15,
+    fontWeight: '700',
     color: '#102A43',
   },
-
   benefitDescription: {
-    fontSize: 12,
+    fontSize: 13,
     color: '#627D98',
     marginTop: 2,
   },
-
-  /* ================= BOTÓN ================= */
-
   primaryButton: {
-    alignSelf: 'flex-start',
+    backgroundColor: '#0284C7',
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#0284C7',
-    paddingHorizontal: 21,
-    paddingVertical: 14,
-    borderRadius: 12,
+    justifyContent: 'center',
+    paddingVertical: 16,
+    paddingHorizontal: 28,
+    borderRadius: 14,
+    alignSelf: 'flex-start',
   },
-
   primaryButtonText: {
     color: '#FFFFFF',
-    fontSize: 14,
-    fontWeight: '800',
+    fontSize: 16,
+    fontWeight: '700',
+    marginRight: 8,
   },
-
   primaryButtonArrow: {
     color: '#FFFFFF',
-    fontSize: 19,
-    marginLeft: 12,
+    fontSize: 18,
+    fontWeight: '700',
   },
-
-  /* ================= IMAGEN ================= */
-
   imageCard: {
-    width: 470,
-    height: 430,
-    borderRadius: 22,
+    width: '100%',
+    maxWidth: 480,
+    minWidth: 280,
+    height: 420,
+    borderRadius: 20,
     overflow: 'hidden',
-    backgroundColor: '#E2E8F0',
     position: 'relative',
+    marginTop: 20,
   },
-
   careImage: {
     width: '100%',
     height: '100%',
   },
-
   imageOverlay: {
     position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    backgroundColor: 'rgba(15, 42, 67, 0.88)',
-    padding: 18,
+    bottom: 20,
+    left: 20,
+    right: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    padding: 16,
+    borderRadius: 16,
     flexDirection: 'row',
     alignItems: 'center',
   },
-
   overlayIcon: {
-    width: 46,
-    height: 46,
-    borderRadius: 23,
-    backgroundColor: '#38BDF8',
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#E0F2FE',
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,
   },
-
   overlayIconText: {
-    color: '#FFFFFF',
-    fontSize: 27,
+    color: '#0284C7',
+    fontSize: 20,
   },
-
   overlayContent: {
     flex: 1,
   },
-
   overlayTextTitle: {
-    color: '#FFFFFF',
-    fontSize: 15,
-    fontWeight: '800',
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#102A43',
   },
-
   overlayTextSubtitle: {
-    color: '#BAE6FD',
     fontSize: 12,
-    marginTop: 3,
+    color: '#627D98',
+    marginTop: 2,
   },
-
-  /* ================= SECCIONES ================= */
-
   sectionContainer: {
     width: '100%',
     maxWidth: 1180,
-    marginBottom: 55,
+    marginBottom: 35,
   },
-
   sectionHeadingRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 18,
+    marginBottom: 20,
   },
-
   sectionAccent: {
-    width: 5,
-    height: 48,
+    width: 4,
+    height: 36,
     backgroundColor: '#0284C7',
-    borderRadius: 3,
+    borderRadius: 2,
     marginRight: 12,
   },
-
   sectionTitle: {
-    fontSize: 27,
-    fontWeight: '900',
+    fontSize: 22,
+    fontWeight: '800',
     color: '#102A43',
   },
-
   sectionSubtitle: {
     fontSize: 13,
-    color: '#829AB1',
+    color: '#627D98',
     marginTop: 2,
   },
-
-  /* ================= QUIÉNES SOMOS ================= */
-
   aboutCard: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 18,
-    padding: 25,
-
-    ...Platform.select({
-      ios: {
-        shadowColor: '#102A43',
-        shadowOpacity: 0.04,
-        shadowRadius: 10,
-        shadowOffset: {
-          width: 0,
-          height: 4,
-        },
-      },
-
-      android: {
-        elevation: 2,
-      },
-
-      web: {
-        boxShadow: '0px 5px 20px rgba(16,42,67,0.05)',
-      },
-    }),
+    padding: 24,
+    borderRadius: 20,
   },
-
   sectionParagraph: {
     fontSize: 15,
-    lineHeight: 25,
     color: '#486581',
-    marginBottom: 13,
+    lineHeight: 24,
+    marginBottom: 12,
   },
-
-  /* ================= CARDS ================= */
-
   cardsContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'space-between',
   },
-
   featureCard: {
     width: '48%',
+    minWidth: 260,
     backgroundColor: '#FFFFFF',
-    borderRadius: 18,
     padding: 22,
-    marginBottom: 18,
-    borderWidth: 1,
-    borderColor: '#E6EEF5',
+    borderRadius: 18,
+    marginBottom: 16,
   },
-
   featureIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: 16,
+    width: 44,
+    height: 44,
+    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 15,
+    marginBottom: 14,
   },
-
-  featureBlue: {
-    backgroundColor: '#E0F2FE',
-  },
-
-  featureGreen: {
-    backgroundColor: '#DCFCE7',
-  },
-
-  featurePurple: {
-    backgroundColor: '#EDE9FE',
-  },
-
-  featureOrange: {
-    backgroundColor: '#FFEDD5',
-  },
-
+  featureBlue: { backgroundColor: '#E0F2FE' },
+  featureGreen: { backgroundColor: '#DCFCE7' },
+  featurePurple: { backgroundColor: '#F3E8FF' },
+  featureOrange: { backgroundColor: '#FFEDD5' },
   featureIconText: {
-    fontSize: 23,
+    fontSize: 20,
     color: '#0284C7',
-    fontWeight: '800',
   },
-
   featureCardTitle: {
-    fontSize: 17,
-    fontWeight: '800',
+    fontSize: 16,
+    fontWeight: '700',
     color: '#102A43',
     marginBottom: 8,
   },
-
   featureCardText: {
-    fontSize: 14,
-    lineHeight: 22,
+    fontSize: 13,
     color: '#627D98',
+    lineHeight: 20,
   },
-
-  /* ================= PASOS ================= */
-
   stepsContainer: {
     backgroundColor: '#FFFFFF',
+    padding: 24,
     borderRadius: 20,
-    padding: 25,
   },
-
   stepItem: {
     flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 22,
+    alignItems: 'flex-start',
+    marginBottom: 20,
   },
-
   stepNumber: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     backgroundColor: '#E0F2FE',
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 15,
+    marginRight: 16,
   },
-
   stepNumberText: {
-    color: '#0284C7',
-    fontWeight: '900',
     fontSize: 14,
+    fontWeight: '800',
+    color: '#0284C7',
   },
-
   stepContent: {
     flex: 1,
   },
-
   stepTitle: {
     fontSize: 16,
-    fontWeight: '800',
+    fontWeight: '700',
     color: '#102A43',
-    marginBottom: 3,
   },
-
   stepDescription: {
     fontSize: 13,
-    lineHeight: 20,
     color: '#627D98',
+    marginTop: 4,
   },
-
-  /* ================= SEGURIDAD ================= */
-
   safetyContainer: {
     width: '100%',
     maxWidth: 1180,
-    backgroundColor: '#EFF6FF',
-    borderWidth: 1,
-    borderColor: '#BFDBFE',
+    backgroundColor: '#FEF3C7',
     borderRadius: 18,
-    padding: 22,
+    padding: 20,
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 55,
+    marginBottom: 35,
   },
-
   safetyIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: '#0284C7',
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#F59E0B',
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 15,
+    marginRight: 16,
   },
-
   safetyIconText: {
     color: '#FFFFFF',
-    fontSize: 23,
-    fontWeight: '900',
+    fontSize: 18,
+    fontWeight: '800',
   },
-
   safetyTextContainer: {
     flex: 1,
   },
-
   safetyTitle: {
-    fontSize: 16,
-    fontWeight: '900',
-    color: '#0C4A6E',
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#92400E',
     marginBottom: 4,
   },
-
   safetyText: {
     fontSize: 13,
-    lineHeight: 20,
-    color: '#36566F',
+    color: '#B45309',
+    lineHeight: 18,
   },
-
-  /* ================= CTA ================= */
-
   ctaContainer: {
     width: '100%',
     maxWidth: 1180,
     backgroundColor: '#102A43',
     borderRadius: 24,
-    padding: 40,
+    padding: 36,
     alignItems: 'center',
-    marginBottom: 45,
+    marginBottom: 40,
   },
-
   ctaTitle: {
+    fontSize: 26,
+    fontWeight: '800',
     color: '#FFFFFF',
-    fontSize: 28,
-    fontWeight: '900',
     textAlign: 'center',
-    marginBottom: 8,
+    marginBottom: 10,
   },
-
   ctaSubtitle: {
-    color: '#BCCCDC',
     fontSize: 15,
+    color: '#9FB3C8',
     textAlign: 'center',
-    marginBottom: 22,
+    marginBottom: 24,
   },
-
   ctaButton: {
     backgroundColor: '#0284C7',
-    paddingHorizontal: 25,
-    paddingVertical: 14,
-    borderRadius: 12,
     flexDirection: 'row',
     alignItems: 'center',
+    paddingVertical: 16,
+    paddingHorizontal: 32,
+    borderRadius: 14,
   },
-
   ctaButtonText: {
     color: '#FFFFFF',
-    fontSize: 15,
-    fontWeight: '800',
+    fontSize: 16,
+    fontWeight: '700',
+    marginRight: 8,
   },
-
   ctaButtonArrow: {
     color: '#FFFFFF',
-    fontSize: 20,
-    marginLeft: 12,
+    fontSize: 18,
+    fontWeight: '700',
   },
-
-  /* ================= FOOTER ================= */
-
   footer: {
     width: '100%',
     maxWidth: 1180,
     alignItems: 'center',
-    paddingTop: 10,
-    paddingBottom: 30,
+    paddingTop: 20,
+    borderTopWidth: 1,
+    borderTopColor: '#E4E9F0',
   },
-
   footerBrand: {
-    fontSize: 22,
+    fontSize: 18,
     fontWeight: '900',
     color: '#102A43',
     letterSpacing: 2,
-    marginBottom: 5,
+    marginBottom: 6,
   },
-
   footerText: {
-    fontSize: 12,
-    color: '#829AB1',
+    fontSize: 13,
+    color: '#627D98',
     textAlign: 'center',
-    marginBottom: 8,
+    marginBottom: 12,
   },
-
   footerCopyright: {
-    fontSize: 11,
+    fontSize: 12,
     color: '#9FB3C8',
-    textAlign: 'center',
   },
-
 });
