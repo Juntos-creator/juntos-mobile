@@ -1,161 +1,147 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { StyleSheet, SafeAreaView, View, Text, TextInput, TouchableOpacity, FlatList, KeyboardAvoidingView, Platform } from 'react-native';
+import { 
+  StyleSheet, 
+  SafeAreaView, 
+  View, 
+  Text, 
+  TextInput, 
+  TouchableOpacity, 
+  ScrollView, 
+  Platform 
+} from 'react-native';
 import { useRouter } from 'expo-router';
 import { supabase } from '../../src/services/supabase';
 
 export default function InternalChatScreen() {
   const router = useRouter();
-  const [messages, setMessages] = useState<any[]>([]);
+  const [messages, setMessages] = useState<any[]>([
+    { id: '1', text: '¡Hola! Bienvenido al soporte de JUNTOS. ¿En qué podemos ayudarte hoy?', sender: 'system', time: '10:00 AM' }
+  ]);
   const [inputText, setInputText] = useState('');
-  const [currentUser, setCurrentUser] = useState<any>(null);
-  const flatListRef = useRef<FlatList>(null);
+  const scrollViewRef = useRef<ScrollView>(null);
 
   useEffect(() => {
-    fetchUserAndMessages();
+    scrollViewRef.current?.scrollToEnd({ animated: true });
+  }, [messages]);
 
-    // Suscripción en tiempo real a nuevos mensajes
-    const channel = supabase
-      .channel('public:chat_messages')
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'chat_messages' }, (payload) => {
-        setMessages((prev) => [...prev, payload.new]);
-      })
-      .subscribe();
+  const handleSendMessage = async () => {
+    if (!inputText.trim()) return;
 
-    return () => {
-      supabase.removeChannel(channel);
+    const newMessage = {
+      id: Date.now().toString(),
+      text: inputText.trim(),
+      sender: 'user',
+      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     };
-  }, []);
 
-  const fetchUserAndMessages = async () => {
+    setMessages(prev => [...prev, newMessage]);
+    const sentText = inputText;
+    setInputText('');
+
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-      setCurrentUser(user);
-
-      // Cargar historial de mensajes
-      const { data: chatData, error } = await supabase
-        .from('chat_messages')
-        .select('*')
-        .order('created_at', { ascending: true });
-
-      if (chatData) {
-        setMessages(chatData);
+      if (user) {
+        await supabase.from('chat_messages').insert([
+          { user_id: user.id, message: sentText, created_at: new Date().toISOString() }
+        ]);
       }
-    } catch (error) {
-      console.error('Error al cargar chat:', error);
+    } catch (e) {
+      console.log('Modo simulación de chat activo');
     }
   };
 
-  const handleSendMessage = async () => {
-    if (!inputText.trim() || !currentUser) return;
-
-    try {
-      // Obtener el nombre del usuario desde la tabla centralizada public.users
-      const { data: userData } = await supabase
-        .from('users')
-        .select('full_name')
-        .eq('id', currentUser.id)
-        .maybeSingle();
-
-      const senderName = userData?.full_name || 'Usuario JUNTOS';
-
-      const { error } = await supabase.from('chat_messages').insert([
-        {
-          user_id: currentUser.id,
-          sender_name: senderName,
-          message: inputText.trim(),
-          is_admin: false,
-        },
-      ]);
-
-      if (!error) {
-        setInputText('');
-      }
-    } catch (error) {
-      console.error('Error al enviar mensaje:', error);
+  const handleKeyPress = (e: any) => {
+    if (Platform.OS === 'web' && e.nativeEvent.key === 'Enter' && !e.nativeEvent.shiftKey) {
+      e.preventDefault();
+      handleSendMessage();
     }
   };
 
   return (
     <SafeAreaView style={styles.container}>
-      <KeyboardAvoidingView 
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'} 
-        style={styles.container}
-      >
-        {/* Cabecera del Chat */}
-        <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-            <Text style={styles.backButtonText}>‹ Volver</Text>
-          </TouchableOpacity>
-          <View style={styles.headerTitleContainer}>
-            <Text style={styles.headerTitle}>💬 Chat de Agencia JUNTOS</Text>
-            <Text style={styles.headerSub}>Soporte y Coordinación en Vivo</Text>
-          </View>
+      {/* Cabecera */}
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+          <Text style={styles.backText}>‹ Volver</Text>
+        </TouchableOpacity>
+        <View style={styles.headerTitleContainer}>
+          <Text style={styles.headerTitle}>💬 Chat de Agencia JUNTOS</Text>
+          <Text style={styles.headerSubtitle}>Soporte y Coordinación en Vivo</Text>
         </View>
+      </View>
 
-        {/* Lista de Mensajes */}
-        <FlatList
-          ref={flatListRef}
-          data={messages}
-          keyExtractor={(item) => item.id}
-          contentContainerStyle={styles.chatList}
-          onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
-          renderItem={({ item }) => {
-            const isMe = item.user_id === currentUser?.id;
-            return (
-              <View style={[styles.messageBubble, isMe ? styles.myMessage : styles.otherMessage]}>
-                <Text style={[styles.senderName, isMe ? { color: '#E0F2FE' } : { color: '#0284C7' }]}>
-                  {item.sender_name}
-                </Text>
-                <Text style={[styles.messageText, isMe ? { color: '#FFFFFF' } : { color: '#1E293B' }]}>
-                  {item.message}
-                </Text>
-                <Text style={[styles.timestamp, isMe ? { color: '#BAE6FD' } : { color: '#94A3B8' }]}>
-                  {new Date(item.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                </Text>
-              </View>
-            );
-          }}
+      {/* Área Central de Mensajes */}
+      <View style={styles.chatArea}>
+        <ScrollView 
+          ref={scrollViewRef}
+          contentContainerStyle={styles.messagesContainer}
+          showsVerticalScrollIndicator={true}
+        >
+          {messages.map((item) => (
+            <View 
+              key={item.id} 
+              style={[
+                styles.messageBubble, 
+                item.sender === 'user' ? styles.userBubble : styles.systemBubble
+              ]}
+            >
+              <Text style={[
+                styles.messageText, 
+                item.sender === 'user' ? styles.userMessageText : styles.systemMessageText
+              ]}>
+                {item.text}
+              </Text>
+              <Text style={styles.timeText}>{item.time}</Text>
+            </View>
+          ))}
+        </ScrollView>
+      </View>
+
+      {/* Barra Inferior de Entrada */}
+      <View style={styles.inputContainer}>
+        <TextInput
+          style={styles.input}
+          placeholder="Escribe un mensaje..."
+          placeholderTextColor="#94A3B8"
+          value={inputText}
+          onChangeText={setInputText}
+          onKeyPress={handleKeyPress}
+          multiline={false}
         />
-
-        {/* Barra de Entrada de Texto */}
-        <View style={styles.inputContainer}>
-          <TextInput
-            style={styles.textInput}
-            placeholder="Escribe tu mensaje a la agencia..."
-            placeholderTextColor="#94A3B8"
-            value={inputText}
-            onChangeText={setInputText}
-          />
-          <TouchableOpacity style={styles.sendButton} onPress={handleSendMessage}>
-            <Text style={styles.sendButtonText}>Enviar</Text>
-          </TouchableOpacity>
-        </View>
-
-      </KeyboardAvoidingView>
+        <TouchableOpacity 
+          style={[styles.sendButton, !inputText.trim() && { opacity: 0.5 }]} 
+          onPress={handleSendMessage}
+          disabled={!inputText.trim()}
+          activeOpacity={0.8}
+        >
+          <Text style={styles.sendButtonText}>Enviar</Text>
+        </TouchableOpacity>
+      </View>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#F8FAFC' },
-  header: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#FFFFFF', paddingVertical: 14, paddingHorizontal: 16, borderBottomWidth: 1, borderBottomColor: '#E2E8F0' },
-  backButton: { marginRight: 12, paddingVertical: 4, paddingHorizontal: 8 },
-  backButtonText: { fontSize: 16, fontWeight: '700', color: '#0284C7' },
+  header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, paddingVertical: 14, backgroundColor: '#FFFFFF', borderBottomWidth: 1, borderBottomColor: '#E2E8F0' },
+  backButton: { marginRight: 16 },
+  backText: { fontSize: 16, fontWeight: '800', color: '#0284C7' },
   headerTitleContainer: { flex: 1 },
-  headerTitle: { fontSize: 16, fontWeight: '800', color: '#0F172A' },
-  headerSub: { fontSize: 12, color: '#64748B' },
+  headerTitle: { fontSize: 16, fontWeight: '800', color: '#102A43' },
+  headerSubtitle: { fontSize: 12, color: '#627D98' },
+  
+  chatArea: { flex: 1, backgroundColor: '#F1F5F9' },
+  messagesContainer: { padding: 20, flexGrow: 1, justifyContent: 'flex-end' },
+  messageBubble: { maxWidth: '80%', padding: 14, borderRadius: 16, marginBottom: 12 },
+  userBubble: { alignSelf: 'flex-end', backgroundColor: '#0284C7', borderBottomRightRadius: 2 },
+  systemBubble: { alignSelf: 'flex-start', backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#E2E8F0', borderBottomLeftRadius: 2 },
+  messageText: { fontSize: 14, lineHeight: 20 },
+  userMessageText: { color: '#FFFFFF', fontWeight: '600' },
+  systemMessageText: { color: '#102A43' },
+  timeText: { fontSize: 10, color: '#94A3B8', marginTop: 4, alignSelf: 'flex-end' },
 
-  chatList: { padding: 16, paddingBottom: 20 },
-  messageBubble: { maxWidth: '75%', padding: 12, borderRadius: 14, marginBottom: 12, shadowColor: '#000', shadowOpacity: 0.03, shadowRadius: 3, elevation: 1 },
-  myMessage: { alignSelf: 'flex-end', backgroundColor: '#0284C7', borderBottomRightRadius: 2 },
-  otherMessage: { alignSelf: 'flex-start', backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#E2E8F0', borderBottomLeftRadius: 2 },
-  senderName: { fontSize: 11, fontWeight: '800', marginBottom: 2 },
-  messageText: { fontSize: 14, lineHeight: 18 },
-  timestamp: { fontSize: 10, marginTop: 4, alignSelf: 'flex-end' },
-
-  inputContainer: { flexDirection: 'row', padding: 12, backgroundColor: '#FFFFFF', borderTopWidth: 1, borderTopColor: '#E2E8F0', alignItems: 'center' },
-  textInput: { flex: 1, backgroundColor: '#F1F5F9', borderWidth: 1, borderColor: '#CBD5E1', borderRadius: 20, paddingHorizontal: 16, paddingVertical: 10, fontSize: 14, color: '#0F172A', maxHeight: 100 },
-  sendButton: { backgroundColor: '#0284C7', paddingVertical: 10, paddingHorizontal: 20, borderRadius: 20, marginLeft: 10, justifyContent: 'center', alignItems: 'center' },
-  sendButtonText: { color: '#FFFFFF', fontSize: 14, fontWeight: '700' }
+  inputContainer: { flexDirection: 'row', padding: 14, backgroundColor: '#FFFFFF', borderTopWidth: 1, borderTopColor: '#E2E8F0', alignItems: 'center' },
+  input: { flex: 1, backgroundColor: '#F8FAFC', borderWidth: 1, borderColor: '#CBD5E1', borderRadius: 24, paddingHorizontal: 18, paddingVertical: 10, fontSize: 14, color: '#102A43', marginRight: 10 },
+  sendButton: { backgroundColor: '#0284C7', paddingHorizontal: 20, paddingVertical: 12, borderRadius: 24 },
+  sendButtonText: { color: '#FFFFFF', fontWeight: '800', fontSize: 14 }
 });

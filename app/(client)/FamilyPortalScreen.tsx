@@ -1,214 +1,210 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Platform, Alert, ActivityIndicator } from 'react-native';
+import {
+  StyleSheet,
+  SafeAreaView,
+  ScrollView,
+  View,
+  Text,
+  TouchableOpacity,
+  Platform,
+} from 'react-native';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
-import { supabase } from '../../src/services/supabase';
-import { getActiveFamilyServices } from '../../src/services/clientService';
 
-export default function FamilyPortalScreen(): React.JSX.Element {
+export default function FamilyPortalScreen() {
   const router = useRouter();
-  const [services, setServices] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const params = useLocalSearchParams();
+  const [viewMode, setViewMode] = useState<'client' | 'family'>('client');
 
   useEffect(() => {
-    fetchFamilyServices();
-  }, []);
-
-  const fetchFamilyServices = async () => {
-    try {
-      const data = await getActiveFamilyServices();
-      setServices(data || []);
-    } catch (error) {
-      console.error('Error al obtener servicios familiares:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleLogout = async () => {
-    try {
-      await supabase.auth.signOut();
-      router.replace('/auth/login');
-    } catch (error: any) {
-      if (Platform.OS === 'web') {
-        window.alert('Error al cerrar sesión');
-      } else {
-        Alert.alert('Error', 'No se pudo cerrar sesión.');
+    if (params.viewMode === 'family' || params.viewMode === 'client') {
+      setViewMode(params.viewMode as 'client' | 'family');
+    } else if (Platform.OS === 'web') {
+      const storedRole = localStorage.getItem('juntos_user_role');
+      if (storedRole === 'family') {
+        setViewMode('family');
       }
     }
-  };
+  }, [params.viewMode]);
+
+  const isClient = viewMode === 'client';
 
   return (
-    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-      {/* Cabecera del Portal del Familiar */}
-      <View style={styles.header}>
-        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+    <SafeAreaView style={styles.container}>
+      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+        
+        {/* ENCABEZADO CON NAVEGACIÓN */}
+        <View style={styles.header}>
           <TouchableOpacity onPress={() => router.push('/(client)/home')} style={styles.backBtn}>
-            <Ionicons name="arrow-back" size={20} color="#0066CC" />
+            <Ionicons name="arrow-back" size={18} color="#0284C7" />
+            <Text style={styles.backBtnText}>Volver</Text>
           </TouchableOpacity>
-          <View>
-            <Text style={styles.welcomeText}>Portal Familiar</Text>
-            <Text style={styles.subText}>Supervisión y Seguridad de tus Seres Queridos</Text>
-          </View>
+
+          <TouchableOpacity onPress={() => router.push('/')} style={styles.brandRow}>
+            <View style={styles.logoMark}>
+              <Text style={styles.logoHeart}>♡</Text>
+            </View>
+            <View>
+              <Text style={styles.brandTitle}>JUNTOS</Text>
+              <Text style={styles.brandSubtitle}>
+                {isClient ? 'Portal del Cliente Directo' : 'Portal de Supervisión Familiar'}
+              </Text>
+            </View>
+          </TouchableOpacity>
         </View>
 
-        <View style={{ flexDirection: 'row', gap: 8 }}>
+        {/* HERO BANNER PRINCIPAL */}
+        <View style={styles.heroCard}>
+          <View style={styles.badgeContainer}>
+            <Text style={styles.badgeDot}>●</Text>
+            <Text style={styles.badgeText}>
+              {isClient ? 'PANEL DEL CLIENTE ACTIVO' : 'PANEL FAMILIAR ACTIVO'}
+            </Text>
+          </View>
+          <Text style={styles.heroBadgeRight}>🛡 Enlace Seguro JUNTOS</Text>
+
+          <Text style={styles.heroTitle}>Tus Servicios de Acompañamiento</Text>
+          <Text style={styles.heroSubtitle}>
+            {isClient
+              ? 'Supervisa en tiempo real el historial de solicitudes, distinguiendo si fueron realizadas por ti directamente o por tu familiar.'
+              : 'Supervisa y acompaña la asistencia de tus seres queridos con reportes claros y transparentes en tiempo real.'}
+          </Text>
+        </View>
+
+        {/* BARRAS DE ACCIONES (SE ELIMINÓ EL BOTÓN "SALA SITUACIONAL GPS" GLOBAL) */}
+        <View style={styles.actionRow}>
           <TouchableOpacity 
-            style={styles.notificationButton}
-            onPress={() => router.push('/notifications/push-notifications')}
+            style={styles.primaryActionBtn} 
+            onPress={() => router.push({ pathname: '/(client)/select-companion', params: { requested_by: viewMode } })}
+            activeOpacity={0.88}
           >
-            <Ionicons name="notifications-outline" size={22} color="#0066CC" />
-          </TouchableOpacity>
-          
-          <TouchableOpacity style={styles.logoutChip} onPress={handleLogout}>
-            <Ionicons name="log-out-outline" size={20} color="#DC2626" />
+            <Ionicons name="add-circle-outline" size={20} color="#FFFFFF" style={{ marginRight: 6 }} />
+            <Text style={styles.primaryActionBtnText}>
+              {isClient ? 'Solicitar mi Acompañamiento' : 'Solicitar para mi Familiar'}
+            </Text>
           </TouchableOpacity>
         </View>
-      </View>
 
-      {/* Tarjeta de Estado en Vivo / Resumen */}
-      <View style={styles.liveCardBanner}>
-        <View style={styles.rowBetween}>
-          <View style={{flexDirection: 'row', alignItems: 'center'}}>
-            <View style={styles.liveDot} />
-            <Text style={styles.liveBannerTitle}>Monitoreo Activo en Tiempo Real</Text>
-          </View>
-          <Text style={styles.liveBannerTime}>GPS OK</Text>
+        {/* HISTORIAL DE SERVICIOS Y CALIFICACIONES */}
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>Historial de Servicios y Calificaciones</Text>
+          <Text style={styles.sectionSubtitle}>
+            Registro detallado indicando la persona que realizó la solicitud.
+          </Text>
         </View>
-        <Text style={styles.liveBannerSub}>
-          {services.filter(s => s.status === 'in_progress' || s.status === 'pending').length} servicio(s) en curso o pendientes bajo supervisión.
-        </Text>
-      </View>
 
-      {/* Acciones Rápidas */}
-      <View style={styles.quickActionsRow}>
-        <TouchableOpacity 
-          style={styles.quickActionBtn} 
-          onPress={() => router.push('/(client)/select-companion')}
-        >
-          <Ionicons name="add-circle-outline" size={20} color="#0066CC" />
-          <Text style={styles.quickActionText}>Solicitar Acompañamiento</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity 
-          style={styles.quickActionBtn} 
-          onPress={() => router.push('/(client)/care-preferences')}
-        >
-          <Ionicons name="options-outline" size={20} color="#0066CC" />
-          <Text style={styles.quickActionText}>Configurar Preferencias</Text>
-        </TouchableOpacity>
-      </View>
-
-      {/* Listado de Servicios / Acompañamientos */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Estado de tus Solicitudes</Text>
-
-        {loading ? (
-          <ActivityIndicator size="large" color="#0066CC" style={{ marginVertical: 20 }} />
-        ) : services.length === 0 ? (
-          <View style={styles.emptyCard}>
-            <Text style={styles.emptyText}>No tienes solicitudes de acompañamiento registradas aún.</Text>
-            <TouchableOpacity 
-              style={styles.createServiceLink}
-              onPress={() => router.push('/(client)/select-companion')}
-            >
-              <Text style={styles.createServiceLinkText}>+ Crear primera solicitud</Text>
-            </TouchableOpacity>
-          </View>
-        ) : (
-          services.map((item) => {
-            const isPending = item.status === 'pending';
-            const isInProgress = item.status === 'in_progress';
-            const statusLabel = isPending ? 'Pendiente' : isInProgress ? 'En Curso' : 'Completado';
-            const badgeBg = isInProgress ? '#E6F4EA' : isPending ? '#FEF3C7' : '#F1F3F4';
-            const badgeColor = isInProgress ? '#137333' : isPending ? '#D97706' : '#5F6368';
-
-            return (
-              <View key={item.id} style={styles.serviceCard}>
-                <View style={styles.rowBetween}>
-                  <Text style={styles.seniorName}>{item.address}</Text>
-                  <View style={[styles.badge, { backgroundColor: badgeBg }]}>
-                    <Text style={[styles.badgeText, { color: badgeColor }]}>
-                      {statusLabel}
-                    </Text>
-                  </View>
-                </View>
-                <Text style={styles.companionText}>
-                  Acompañante: <Text style={{fontWeight: 'bold'}}>{item.companion?.full_name || 'Asignando acompañante...'}</Text>
-                </Text>
-                {item.notes ? (
-                  <Text style={styles.routeText}>
-                    <Ionicons name="document-text-outline" size={14} color="#666" /> {item.notes}
-                  </Text>
-                ) : null}
-                
-                <View style={styles.rowFooter}>
-                  <Text style={styles.timeText}>
-                    {new Date(item.created_at).toLocaleDateString()}
-                  </Text>
-                  <TouchableOpacity 
-                    style={styles.trackBtn}
-                    onPress={() => router.push('/(client)/select-companion')}
-                  >
-                    <Ionicons name="location" size={14} color="#FFF" style={{marginRight: 4}} />
-                    <Text style={styles.trackBtnText}>Ver Mapa GPS</Text>
-                  </TouchableOpacity>
-                </View>
+        {/* TARJETAS DE SERVICIOS */}
+        <View style={styles.cardsContainer}>
+          {/* SERVICIO 1 */}
+          <View style={styles.serviceCard}>
+            <View style={styles.cardHeaderRow}>
+              <View style={styles.statusBadge}>
+                <Text style={styles.statusBadgeText}>⌛ Servicio en Curso / Pendiente</Text>
               </View>
-            );
-          })
-        )}
-      </View>
+              <View style={styles.roleTag}>
+                <Ionicons name="people" size={12} color="#0284C7" style={{ marginRight: 4 }} />
+                <Text style={styles.roleTagText}>Solicitante: Familiar</Text>
+              </View>
+            </View>
 
-      {/* Botón de Contacto Rápido / Emergencia */}
-      <TouchableOpacity 
-        style={styles.emergencyButton}
-        onPress={() => router.push('/chat/internal-chat')}
-      >
-        <Ionicons name="call" size={20} color="#FFF" style={{marginRight: 8}} />
-        <Text style={styles.emergencyButtonText}>Contactar Mesa de Operaciones</Text>
-      </TouchableOpacity>
-    </ScrollView>
+            <Text style={styles.companionName}>👤 Acompañante: Ana Martínez</Text>
+            <Text style={styles.cardLocation}>📍 Destino: Centro Médico UCE, Santo Domingo [Distrito Nacional]</Text>
+            <Text style={styles.cardNotes}>Notas: "Solicitud confirmada bajo Plan Personalizado (3 Horas - RD$ 4,500)."</Text>
+            
+            <View style={styles.cardFooterRow}>
+              <Text style={styles.cardTime}>🕒 Registrado: 10/10/2026 a las 18:40</Text>
+              
+              {/* ACCESO A LA SALA SITUACIONAL EXCLUSIVO DEL SERVICIO EN CURSO */}
+              <TouchableOpacity 
+                style={styles.situationalBtn}
+                onPress={() => router.push('/matching/situational-room')}
+                activeOpacity={0.8}
+              >
+                <Ionicons name="navigate" size={14} color="#0284C7" style={{ marginRight: 4 }} />
+                <Text style={styles.situationalBtnText}>Ver Sala Situacional</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          {/* SERVICIO 2 */}
+          <View style={styles.serviceCard}>
+            <View style={styles.cardHeaderRow}>
+              <View style={styles.statusBadge}>
+                <Text style={styles.statusBadgeText}>⌛ Servicio en Curso / Pendiente</Text>
+              </View>
+              <View style={styles.roleTag}>
+                <Ionicons name="person" size={12} color="#0284C7" style={{ marginRight: 4 }} />
+                <Text style={styles.roleTagText}>Solicitante: Cliente Directo</Text>
+              </View>
+            </View>
+
+            <Text style={styles.companionName}>👤 Acompañante: Ana Martínez</Text>
+            <Text style={styles.cardLocation}>📍 Destino: Centro Médico UCE, Santo Domingo [Distrito Nacional]</Text>
+            <Text style={styles.cardNotes}>Notas: "Solicitud confirmada bajo Plan por Horas (1 Hora - RD$ 1,500)."</Text>
+            
+            <View style={styles.cardFooterRow}>
+              <Text style={styles.cardTime}>🕒 Registrado: 10/10/2026 a las 17:54</Text>
+              
+              <TouchableOpacity 
+                style={styles.situationalBtn}
+                onPress={() => router.push('/matching/situational-room')}
+                activeOpacity={0.8}
+              >
+                <Ionicons name="navigate" size={14} color="#0284C7" style={{ marginRight: 4 }} />
+                <Text style={styles.situationalBtnText}>Ver Sala Situacional</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F8F9FA', padding: 16 },
-  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 },
-  backBtn: { padding: 8, marginRight: 8, backgroundColor: '#E2E8F0', borderRadius: 8 },
-  welcomeText: { fontSize: 22, fontWeight: 'bold', color: '#333' },
-  subText: { fontSize: 13, color: '#666' },
-  notificationButton: { padding: 8, backgroundColor: '#E2E8F0', borderRadius: 8 },
-  logoutChip: { padding: 8, backgroundColor: '#FEF2F2', borderRadius: 8, borderWidth: 1, borderColor: '#FCA5A5' },
-  
-  liveCardBanner: { backgroundColor: '#E6F4EA', padding: 16, borderRadius: 10, marginBottom: 16, borderWidth: 1, borderColor: '#CEEAD6' },
-  liveDot: { width: 10, height: 10, borderRadius: 5, backgroundColor: '#137333', marginRight: 8 },
-  liveBannerTitle: { fontSize: 14, fontWeight: 'bold', color: '#137333' },
-  liveBannerTime: { fontSize: 12, fontWeight: 'bold', color: '#137333' },
-  liveBannerSub: { fontSize: 12, color: '#3c4043', marginTop: 6 },
-  
-  quickActionsRow: { flexDirection: 'row', gap: 10, marginBottom: 20 },
-  quickActionBtn: { flex: 1, backgroundColor: '#FFF', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', padding: 12, borderRadius: 10, borderWidth: 1, borderColor: '#CBD5E1', gap: 6 },
-  quickActionText: { fontSize: 12, fontWeight: '700', color: '#0066CC' },
+  container: { flex: 1, backgroundColor: '#F5F9FC' },
+  scrollContent: { paddingHorizontal: 24, paddingTop: 24, paddingBottom: 60, alignItems: 'center', flexGrow: 1 },
 
-  section: { marginBottom: 20 },
-  sectionTitle: { fontSize: 16, fontWeight: 'bold', color: '#333', marginBottom: 12 },
-  serviceCard: { backgroundColor: '#FFF', padding: 16, borderRadius: 10, marginBottom: 12, elevation: 1 },
-  emptyCard: { backgroundColor: '#FFF', padding: 24, borderRadius: 12, alignItems: 'center', borderWidth: 1, borderColor: '#E2E8F0' },
-  emptyText: { fontSize: 14, color: '#64748B', textAlign: 'center', marginBottom: 12 },
-  createServiceLink: { backgroundColor: '#E0F2FE', paddingHorizontal: 16, paddingVertical: 8, borderRadius: 8 },
-  createServiceLinkText: { fontSize: 13, fontWeight: '800', color: '#0284C7' },
+  header: { width: '100%', maxWidth: 1000, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 },
+  backBtn: { flexDirection: 'row', alignItems: 'center' },
+  backBtnText: { fontSize: 14, fontWeight: '800', color: '#0284C7', marginLeft: 6 },
+  brandRow: { flexDirection: 'row', alignItems: 'center' },
+  logoMark: { width: 40, height: 40, borderRadius: 12, backgroundColor: '#E0F2FE', alignItems: 'center', justifyContent: 'center', marginRight: 10 },
+  logoHeart: { fontSize: 24, color: '#0284C7', fontWeight: '700' },
+  brandTitle: { fontSize: 18, fontWeight: '900', color: '#102A43', letterSpacing: 1.5 },
+  brandSubtitle: { fontSize: 10, color: '#0284C7', fontWeight: '700' },
 
-  rowBetween: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  seniorName: { fontSize: 15, fontWeight: 'bold', color: '#333', flex: 1, marginRight: 8 },
-  companionText: { fontSize: 13, color: '#555', marginTop: 6 },
-  routeText: { fontSize: 13, color: '#444', marginTop: 4, marginBottom: 10 },
-  badge: { paddingHorizontal: 8, paddingVertical: 4, borderRadius: 4 },
-  badgeText: { fontSize: 11, fontWeight: 'bold' },
-  rowFooter: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', borderTopWidth: 1, borderTopColor: '#EEE', paddingTop: 10, marginTop: 4 },
-  timeText: { fontSize: 12, color: '#666' },
-  trackBtn: { backgroundColor: '#0066CC', flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 6 },
-  trackBtnText: { fontSize: 12, color: '#FFF', fontWeight: '600' },
-  emergencyButton: { backgroundColor: '#DC3545', flexDirection: 'row', justifyContent: 'center', alignItems: 'center', padding: 14, borderRadius: 10, marginBottom: 30, elevation: 2 },
-  emergencyButtonText: { color: '#FFF', fontSize: 15, fontWeight: 'bold' }
+  heroCard: { width: '100%', maxWidth: 1000, backgroundColor: '#FFFFFF', borderRadius: 20, padding: 24, borderWidth: 1, borderColor: '#E2E8F0', marginBottom: 20, position: 'relative' },
+  badgeContainer: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#DCFCE7', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12, alignSelf: 'flex-start', marginBottom: 12 },
+  badgeDot: { color: '#16A34A', fontSize: 10, marginRight: 6 },
+  badgeText: { color: '#15803D', fontSize: 10, fontWeight: '900', letterSpacing: 0.5 },
+  heroBadgeRight: { position: 'absolute', top: 24, right: 24, fontSize: 12, fontWeight: '800', color: '#0284C7' },
+  heroTitle: { fontSize: 22, fontWeight: '900', color: '#102A43', marginBottom: 6 },
+  heroSubtitle: { fontSize: 13, color: '#627D98', lineHeight: 20 },
+
+  actionRow: { width: '100%', maxWidth: 1000, flexDirection: 'row', gap: 12, marginBottom: 30 },
+  primaryActionBtn: { flex: 1, backgroundColor: '#0284C7', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 14, borderRadius: 14 },
+  primaryActionBtnText: { color: '#FFFFFF', fontSize: 14, fontWeight: '900' },
+
+  sectionHeader: { width: '100%', maxWidth: 1000, marginBottom: 16 },
+  sectionTitle: { fontSize: 18, fontWeight: '900', color: '#102A43', marginBottom: 2 },
+  sectionSubtitle: { fontSize: 12, color: '#627D98' },
+
+  cardsContainer: { width: '100%', maxWidth: 1000, gap: 16 },
+  serviceCard: { backgroundColor: '#FFFFFF', borderRadius: 18, padding: 20, borderWidth: 1, borderColor: '#E2E8F0' },
+  cardHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
+  statusBadge: { backgroundColor: '#FEF3C7', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 10 },
+  statusBadgeText: { color: '#D97706', fontSize: 11, fontWeight: '800' },
+  roleTag: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#E0F2FE', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 10 },
+  roleTagText: { color: '#0284C7', fontSize: 11, fontWeight: '800' },
+
+  companionName: { fontSize: 16, fontWeight: '900', color: '#102A43', marginBottom: 4 },
+  cardLocation: { fontSize: 13, color: '#334E68', fontWeight: '700', marginBottom: 4 },
+  cardNotes: { fontSize: 12, color: '#627D98', fontStyle: 'italic', marginBottom: 14 },
+
+  cardFooterRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12, borderTopWidth: 1, borderTopColor: '#F1F5F9' },
+  cardTime: { fontSize: 11, color: '#64748B', fontWeight: '600' },
+  situationalBtn: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#F0F9FF', borderWidth: 1, borderColor: '#BAE6FD', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 10 },
+  situationalBtnText: { fontSize: 11, fontWeight: '800', color: '#0284C7' },
 });

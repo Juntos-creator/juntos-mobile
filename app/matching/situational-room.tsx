@@ -1,148 +1,191 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   StyleSheet,
   SafeAreaView,
   ScrollView,
   View,
   Text,
+  TextInput,
   TouchableOpacity,
-  Alert,
   Platform,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { supabase } from '../../src/services/supabase';
+import { Ionicons } from '@expo/vector-icons';
+
+interface Message {
+  id: string;
+  sender: 'companion' | 'client' | 'system';
+  text: string;
+  time: string;
+}
 
 export default function SituationalRoomScreen() {
   const router = useRouter();
-  const [serviceStatus] = useState('En Curso');
-  const [loading, setLoading] = useState(false);
+  const [userRole, setUserRole] = useState<'client' | 'family' | 'companion'>('companion');
+  const [messages, setMessages] = useState<Message[]>([
+    {
+      id: 'm1',
+      sender: 'system',
+      text: '🔔 Servicio asignado. Enlace GPS de monitoreo iniciado.',
+      time: '17:54',
+    },
+    {
+      id: 'm2',
+      sender: 'client',
+      text: 'Hola, el adulto mayor se encuentra en la entrada principal del centro médico.',
+      time: '17:55',
+    },
+  ]);
+  const [inputText, setInputText] = useState('');
 
-  const showAlert = (title: string, message: string, onOk?: () => void) => {
+  useEffect(() => {
     if (Platform.OS === 'web') {
-      window.alert(`${title}: ${message}`);
-      if (onOk) onOk();
-    } else {
-      Alert.alert(title, message, [{ text: 'OK', onPress: onOk }]);
+      const storedRole = localStorage.getItem('juntos_user_role') as 'client' | 'family' | 'companion';
+      if (storedRole) setUserRole(storedRole);
     }
+  }, []);
+
+  const handleSendMessage = (customText?: string) => {
+    const textToSend = customText || inputText;
+    if (!textToSend.trim()) return;
+
+    const newMessage: Message = {
+      id: `msg_${Date.now()}`,
+      sender: userRole === 'companion' ? 'companion' : 'client',
+      text: textToSend.trim(),
+      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+    };
+
+    setMessages((prev) => [...prev, newMessage]);
+    if (!customText) setInputText('');
   };
 
-  // Función para registrar alerta SOS en Supabase
-  const handleSOS = async () => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (user) {
-        await supabase.from('service_incidents').insert([
-          {
-            user_id: user.id,
-            type: 'SOS',
-            description: 'Alerta de emergencia activada desde la Sala Situacional.',
-            created_at: new Date().toISOString(),
-          }
-        ]);
-      }
-
-      showAlert('¡Alerta SOS Enviada!', 'La Mesa de Operaciones ha recibido tu señal de emergencia y se está comunicando contigo.');
-    } catch (error: any) {
-      showAlert('Aviso SOS', 'Alerta emitida. Operaciones ha sido notificada.');
-    }
-  };
-
-  // Función para finalizar el servicio y actualizar en Supabase
-  const handleFinishService = async () => {
-    setLoading(true);
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-
-      if (user) {
-        await supabase
-          .from('care_requests')
-          .update({ status: 'completed' })
-          .eq('client_id', user.id)
-          .eq('status', 'in_progress');
-      }
-
-      showAlert('Servicio Finalizado', 'Pasando al módulo de Valoración y Calificación.', () => {
-        router.push('/rating'); // Redirige a la pantalla de calificación
-      });
-    } catch (error: any) {
-      showAlert('Error', 'No se pudo actualizar el estado del servicio.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleGoBackHome = () => {
-    router.push('/(client)/home');
+  const handleFinishJourney = () => {
+    // Redirigir siempre al proceso de Calificación Bidireccional
+    router.replace('/matching/rating' as any);
   };
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView 
-        contentContainerStyle={styles.scrollContainer}
-        showsVerticalScrollIndicator={false}
-      >
+      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         
-        {/* Cabecera */}
+        {/* CABECERA Y BOTÓN DESTACADO DE FINALIZACIÓN */}
         <View style={styles.header}>
-          <TouchableOpacity onPress={handleGoBackHome} style={styles.logoMark}>
-            <Text style={styles.logoHeart}>♡</Text>
+          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+            <Ionicons name="arrow-back" size={20} color="#0284C7" />
+            <Text style={styles.backButtonText}>Volver</Text>
           </TouchableOpacity>
-          <Text style={styles.logoText}>JUNTOS</Text>
-          <Text style={styles.title}>Sala Situacional en Vivo</Text>
-          <Text style={styles.subtitle}>Monitoreo activo del servicio y GPS en tiempo real</Text>
-        </View>
 
-        {/* Tarjeta de Estado del Servicio */}
-        <View style={styles.statusCard}>
-          <View style={styles.statusHeader}>
-            <Text style={styles.statusBadge}>🟢 {serviceStatus}</Text>
-            <Text style={styles.timerText}>Tiempo restante: 1h 15m</Text>
-          </View>
-          <Text style={styles.routeText}>📍 Destino: Centro Médico UCE, Santo Domingo</Text>
-        </View>
-
-        {/* Simulación de Mapa GPS */}
-        <View style={styles.mapContainer}>
-          <Text style={styles.mapPlaceholderIcon}>🗺️</Text>
-          <Text style={styles.mapPlaceholderTitle}>GPS Activo - Monitoreo Satelital</Text>
-          <Text style={styles.mapPlaceholderDesc}>Ubicación compartida en tiempo real entre Acompañante y Familiar.</Text>
-        </View>
-
-        {/* Panel de Participantes */}
-        <View style={styles.participantsRow}>
-          <View style={styles.participantCard}>
-            <Text style={styles.participantRole}>Acompañante Asignado</Text>
-            <Text style={styles.participantName}>Ana Martínez</Text>
-            <Text style={styles.participantSub}>Enfermera Geriátrica</Text>
-          </View>
-          <View style={styles.participantCard}>
-            <Text style={styles.participantRole}>Paciente / Ser Querido</Text>
-            <Text style={styles.participantName}>María Pérez</Text>
-            <Text style={styles.participantSub}>Cliente Principal</Text>
-          </View>
-        </View>
-
-        {/* Botón de Emergencia / Soporte y Finalizar */}
-        <View style={styles.actionsContainer}>
-          <TouchableOpacity style={styles.sosButton} onPress={handleSOS} activeOpacity={0.85}>
-            <Text style={styles.sosButtonText}>🚨 Botón de Emergencia (SOS)</Text>
-          </TouchableOpacity>
+          <Text style={styles.title}>Sala Situacional GPS</Text>
 
           <TouchableOpacity 
-            style={[styles.finishButton, loading && { opacity: 0.7 }]} 
-            onPress={handleFinishService}
-            disabled={loading}
-            activeOpacity={0.85}
+            style={styles.topFinishBtn} 
+            onPress={handleFinishJourney}
+            activeOpacity={0.88}
           >
-            <Text style={styles.finishButtonText}>
-              {loading ? 'Finalizando...' : 'Finalizar Servicio y Calificar'}
-            </Text>
+            <Ionicons name="checkmark-done-circle" size={18} color="#FFFFFF" style={{ marginRight: 6 }} />
+            <Text style={styles.topFinishBtnText}>Finalizar Servicio</Text>
           </TouchableOpacity>
         </View>
 
-        <TouchableOpacity onPress={handleGoBackHome} style={styles.backButton}>
-          <Text style={styles.backButtonText}>← Volver al Panel Principal</Text>
+        {/* TARJETA DE DATOS DEL SOLICITANTE Y FAMILIAR */}
+        <View style={styles.infoCard}>
+          <Text style={styles.infoTitle}>👤 Datos del Servicio y Contacto</Text>
+          
+          <View style={styles.infoGrid}>
+            <View style={styles.infoBox}>
+              <Text style={styles.infoLabel}>Solicitante / Familiar:</Text>
+              <Text style={styles.infoValue}>Lic. Roberto Gómez (Hijo)</Text>
+              <Text style={styles.infoSub}>📞 +809 555-0192</Text>
+            </View>
+
+            <View style={styles.infoBox}>
+              <Text style={styles.infoLabel}>Adulto Mayor (Beneficiario):</Text>
+              <Text style={styles.infoValue}>Doña Carmen Gómez</Text>
+              <Text style={styles.infoSub}>📍 Centro Médico UCE [Distrito Nacional]</Text>
+            </View>
+          </View>
+        </View>
+
+        {/* MAPA Y ESTADO GPS */}
+        <View style={styles.mapCard}>
+          <View style={styles.mapBadge}>
+            <Text style={styles.mapBadgeDot}>●</Text>
+            <Text style={styles.mapBadgeText}>MONITOREO EN VIVO ACTIVO</Text>
+          </View>
+
+          <View style={styles.mapSimulator}>
+            <Ionicons name="navigate-circle" size={44} color="#0284C7" style={{ marginBottom: 6 }} />
+            <Text style={styles.mapSimText}>📍 Ubicación GPS: Av. Máximo Gómez esq. Pedro Henríquez Ureña</Text>
+            <Text style={styles.mapSimSubText}>Velocidad: 20 km/h • Distancia al punto: 1.2 km</Text>
+          </View>
+        </View>
+
+        {/* CHAT EN VIVO DE LA SALA SITUACIONAL */}
+        <View style={styles.chatCard}>
+          <Text style={styles.chatHeaderTitle}>💬 Chat en Vivo de la Sala Situacional</Text>
+          
+          {/* BOTONES DE REPORTE RÁPIDO */}
+          {userRole === 'companion' && (
+            <View style={styles.quickReportsRow}>
+              <TouchableOpacity 
+                style={styles.quickReportBtn}
+                onPress={() => handleSendMessage('📍 ¡He llegado al punto de encuentro con el cliente!')}
+              >
+                <Text style={styles.quickReportBtnText}>📍 Ya llegué al punto</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity 
+                style={[styles.quickReportBtn, { backgroundColor: '#F0FDF4', borderColor: '#86EFAC' }]}
+                onPress={() => handleSendMessage('🚶‍♂️ Iniciando el acompañamiento con la persona asistida.')}
+              >
+                <Text style={[styles.quickReportBtnText, { color: '#16A34A' }]}>🚶‍♂️ En acompañamiento</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+
+          {/* LISTA DE MENSAJES */}
+          <View style={styles.messagesList}>
+            {messages.map((item) => {
+              if (item.sender === 'system') {
+                return (
+                  <View key={item.id} style={styles.systemMessage}>
+                    <Text style={styles.systemMessageText}>{item.text}</Text>
+                  </View>
+                );
+              }
+              const isMe = (userRole === 'companion' && item.sender === 'companion') || (userRole !== 'companion' && item.sender === 'client');
+              return (
+                <View key={item.id} style={[styles.messageBubble, isMe ? styles.myBubble : styles.theirBubble]}>
+                  <Text style={[styles.messageText, isMe ? styles.myMessageText : styles.theirMessageText]}>
+                    {item.text}
+                  </Text>
+                  <Text style={[styles.messageTime, isMe ? styles.myTime : styles.theirTime]}>{item.time}</Text>
+                </View>
+              );
+            })}
+          </View>
+
+          {/* INPUT DE ENVÍO */}
+          <View style={styles.inputRow}>
+            <TextInput
+              style={styles.input}
+              placeholder="Escribe un mensaje al cliente o familiar..."
+              placeholderTextColor="#94A3B8"
+              value={inputText}
+              onChangeText={setInputText}
+            />
+            <TouchableOpacity style={styles.sendButton} onPress={() => handleSendMessage()}>
+              <Ionicons name="send" size={18} color="#FFFFFF" />
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        {/* BOTÓN PRINCIPAL DE FINALIZAR Y PASAR A CALIFICACIÓN */}
+        <TouchableOpacity style={styles.finishButton} onPress={handleFinishJourney} activeOpacity={0.88}>
+          <Text style={styles.finishButtonText}>
+            🏁 Concluir Servicio y Evaluar Experiencia →
+          </Text>
         </TouchableOpacity>
 
       </ScrollView>
@@ -151,38 +194,55 @@ export default function SituationalRoomScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F8FAFC' },
-  scrollContainer: { padding: 24, alignItems: 'center', flexGrow: 1, paddingBottom: 60 },
-  header: { alignItems: 'center', marginBottom: 20, width: '100%', maxWidth: 500 },
-  logoMark: { width: 56, height: 56, borderRadius: 18, backgroundColor: '#E0F2FE', alignItems: 'center', justifyContent: 'center', marginBottom: 10 },
-  logoHeart: { fontSize: 34, color: '#0284C7', fontWeight: '700' },
-  logoText: { fontSize: 24, fontWeight: '900', color: '#102A43', letterSpacing: 2, marginBottom: 6 },
-  title: { fontSize: 22, fontWeight: '800', color: '#102A43', marginBottom: 6, textAlign: 'center' },
-  subtitle: { fontSize: 14, color: '#627D98', textAlign: 'center', lineHeight: 20 },
+  container: { flex: 1, backgroundColor: '#F5F9FC' },
+  scrollContent: { padding: 20, alignItems: 'center', flexGrow: 1, paddingBottom: 80 },
   
-  statusCard: { width: '100%', maxWidth: 500, backgroundColor: '#F0FDF4', borderWidth: 1, borderColor: '#BBF7D0', borderRadius: 16, padding: 18, marginBottom: 16, shadowColor: '#102A43', shadowOpacity: 0.03, shadowRadius: 8, elevation: 1 },
-  statusHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
-  statusBadge: { fontSize: 13, fontWeight: '700', color: '#16A34A', backgroundColor: '#DCFCE7', paddingVertical: 4, paddingHorizontal: 10, borderRadius: 8 },
-  timerText: { fontSize: 13, fontWeight: '600', color: '#166534' },
-  routeText: { fontSize: 14, fontWeight: '700', color: '#1E293B' },
+  header: { width: '100%', maxWidth: 840, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 },
+  backButton: { flexDirection: 'row', alignItems: 'center' },
+  backButtonText: { fontSize: 14, fontWeight: '800', color: '#0284C7', marginLeft: 4 },
+  title: { fontSize: 18, fontWeight: '900', color: '#102A43' },
+  topFinishBtn: { backgroundColor: '#16A34A', flexDirection: 'row', alignItems: 'center', paddingHorizontal: 14, paddingVertical: 8, borderRadius: 12 },
+  topFinishBtnText: { color: '#FFFFFF', fontSize: 12, fontWeight: '900' },
 
-  mapContainer: { width: '100%', maxWidth: 500, height: 180, backgroundColor: '#FFFFFF', borderRadius: 16, justifyContent: 'center', alignItems: 'center', marginBottom: 16, borderWidth: 1, borderColor: '#CBD5E1', shadowColor: '#102A43', shadowOpacity: 0.03, shadowRadius: 8, elevation: 1 },
-  mapPlaceholderIcon: { fontSize: 36, marginBottom: 6 },
-  mapPlaceholderTitle: { fontSize: 15, fontWeight: '800', color: '#102A43', marginBottom: 4 },
-  mapPlaceholderDesc: { fontSize: 12, color: '#627D98', textAlign: 'center', paddingHorizontal: 20, lineHeight: 16 },
+  infoCard: { width: '100%', maxWidth: 840, backgroundColor: '#FFFFFF', borderRadius: 20, padding: 20, borderWidth: 1, borderColor: '#E2E8F0', marginBottom: 16 },
+  infoTitle: { fontSize: 16, fontWeight: '900', color: '#102A43', marginBottom: 12 },
+  infoGrid: { flexDirection: 'row', gap: 12, flexWrap: 'wrap' },
+  infoBox: { flex: 1, minWidth: 240, backgroundColor: '#F8FAFC', padding: 14, borderRadius: 14, borderWidth: 1, borderColor: '#E2E8F0' },
+  infoLabel: { fontSize: 11, fontWeight: '700', color: '#627D98', marginBottom: 2 },
+  infoValue: { fontSize: 14, fontWeight: '900', color: '#102A43' },
+  infoSub: { fontSize: 12, color: '#0284C7', fontWeight: '700', marginTop: 4 },
 
-  participantsRow: { flexDirection: 'row', gap: 12, width: '100%', maxWidth: 500, marginBottom: 20 },
-  participantCard: { flex: 1, backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#CBD5E1', borderRadius: 16, padding: 16, shadowColor: '#102A43', shadowOpacity: 0.03, shadowRadius: 8, elevation: 1 },
-  participantRole: { fontSize: 11, fontWeight: '700', color: '#627D98', marginBottom: 4 },
-  participantName: { fontSize: 15, fontWeight: '800', color: '#102A43', marginBottom: 2 },
-  participantSub: { fontSize: 12, color: '#334E68' },
+  mapCard: { width: '100%', maxWidth: 840, backgroundColor: '#FFFFFF', borderRadius: 20, padding: 20, borderWidth: 1, borderColor: '#E2E8F0', marginBottom: 16 },
+  mapBadge: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#DCFCE7', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12, alignSelf: 'flex-start', marginBottom: 12 },
+  mapBadgeDot: { color: '#16A34A', fontSize: 10, marginRight: 6 },
+  mapBadgeText: { color: '#15803D', fontSize: 10, fontWeight: '800' },
+  mapSimulator: { backgroundColor: '#F0F9FF', borderRadius: 14, padding: 20, alignItems: 'center', borderWidth: 1, borderColor: '#BAE6FD' },
+  mapSimText: { fontSize: 13, fontWeight: '800', color: '#0369A1', marginBottom: 4, textAlign: 'center' },
+  mapSimSubText: { fontSize: 11, color: '#64748B' },
 
-  actionsContainer: { width: '100%', maxWidth: 500, gap: 12 },
-  sosButton: { backgroundColor: '#FEE2E2', borderWidth: 1, borderColor: '#FCA5A5', paddingVertical: 15, borderRadius: 12, alignItems: 'center' },
-  sosButtonText: { color: '#DC2626', fontSize: 14, fontWeight: '800' },
-  finishButton: { backgroundColor: '#0284C7', paddingVertical: 15, borderRadius: 12, alignItems: 'center' },
-  finishButtonText: { color: '#FFFFFF', fontSize: 15, fontWeight: '800' },
+  chatCard: { width: '100%', maxWidth: 840, backgroundColor: '#FFFFFF', borderRadius: 20, padding: 20, borderWidth: 1, borderColor: '#E2E8F0', marginBottom: 20 },
+  chatHeaderTitle: { fontSize: 16, fontWeight: '900', color: '#102A43', marginBottom: 12 },
+  quickReportsRow: { flexDirection: 'row', gap: 8, marginBottom: 14, flexWrap: 'wrap' },
+  quickReportBtn: { backgroundColor: '#F0F9FF', borderWidth: 1, borderColor: '#BAE6FD', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 10 },
+  quickReportBtnText: { fontSize: 12, fontWeight: '800', color: '#0284C7' },
 
-  backButton: { paddingVertical: 14, alignItems: 'center', marginTop: 8 },
-  backButtonText: { fontSize: 14, color: '#334E68', fontWeight: '700' }
+  messagesList: { minHeight: 180, maxHeight: 260, backgroundColor: '#F8FAFC', borderRadius: 14, padding: 12, marginBottom: 12, borderWidth: 1, borderColor: '#E2E8F0' },
+  systemMessage: { backgroundColor: '#FEF3C7', padding: 8, borderRadius: 10, alignItems: 'center', marginVertical: 4 },
+  systemMessageText: { fontSize: 11, fontWeight: '800', color: '#D97706' },
+  messageBubble: { maxWidth: '80%', padding: 10, borderRadius: 12, marginVertical: 4 },
+  myBubble: { alignSelf: 'flex-end', backgroundColor: '#0284C7' },
+  theirBubble: { alignSelf: 'flex-start', backgroundColor: '#E2E8F0' },
+  messageText: { fontSize: 13 },
+  myMessageText: { color: '#FFFFFF', fontWeight: '600' },
+  theirMessageText: { color: '#102A43', fontWeight: '600' },
+  messageTime: { fontSize: 9, marginTop: 4, textAlign: 'right' },
+  myTime: { color: '#E0F2FE' },
+  theirTime: { color: '#64748B' },
+
+  inputRow: { flexDirection: 'row', gap: 8, alignItems: 'center' },
+  input: { flex: 1, backgroundColor: '#F8FAFC', borderWidth: 1, borderColor: '#CBD5E1', borderRadius: 12, paddingHorizontal: 14, paddingVertical: 10, fontSize: 13, color: '#102A43' },
+  sendButton: { backgroundColor: '#0284C7', padding: 12, borderRadius: 12, justifyContent: 'center', alignItems: 'center' },
+
+  finishButton: { width: '100%', maxWidth: 840, backgroundColor: '#16A34A', paddingVertical: 18, borderRadius: 16, alignItems: 'center', marginTop: 10 },
+  finishButtonText: { color: '#FFFFFF', fontSize: 16, fontWeight: '900' },
 });

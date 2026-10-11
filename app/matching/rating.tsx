@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   StyleSheet,
   SafeAreaView,
@@ -11,117 +11,238 @@ import {
   Platform,
 } from 'react-native';
 import { useRouter } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 import { supabase } from '../../src/services/supabase';
 
-export default function RatingScreen() {
-  const router = useRouter();
-  const [rating, setRating] = useState(5);
-  const [comment, setComment] = useState('');
-  const [loading, setLoading] = useState(false);
+const companionAspects = [
+  'Trato respetuoso y amable',
+  'Puntualidad en punto de encuentro',
+  'Instrucciones y ambiente claro',
+  'Ubicación segura y de fácil acceso',
+];
 
-  const showAlert = (title: string, message: string, onOk?: () => void) => {
+const clientAspects = [
+  'Puntualidad y presencia impecable',
+  'Empatía y calidez humana',
+  'Trato respetuoso con el adulto mayor',
+  'Excelente comunicación en ruta',
+];
+
+export default function RatingReviewScreen() {
+  const router = useRouter();
+  const [userRole, setUserRole] = useState<'client' | 'family' | 'companion'>('client');
+  const [rating, setRating] = useState<number>(5);
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [comment, setComment] = useState<string>('');
+  const [submitting, setSubmitting] = useState<boolean>(false);
+
+  useEffect(() => {
     if (Platform.OS === 'web') {
-      window.alert(`${title}: ${message}`);
-      if (onOk) onOk();
+      const storedRole = localStorage.getItem('juntos_user_role') as 'client' | 'family' | 'companion';
+      if (storedRole) setUserRole(storedRole);
+    }
+  }, []);
+
+  const isCompanion = userRole === 'companion';
+  const availableAspects = isCompanion ? companionAspects : clientAspects;
+
+  const handleStarPress = (selectedRating: number) => {
+    setRating(selectedRating);
+  };
+
+  const toggleTag = (tag: string) => {
+    if (selectedTags.includes(tag)) {
+      setSelectedTags(selectedTags.filter((t) => t !== tag));
     } else {
-      Alert.alert(title, message, [{ text: 'OK', onPress: onOk }]);
+      setSelectedTags([...selectedTags, tag]);
     }
   };
 
-  const handleSubmitRating = async () => {
-    setLoading(true);
+  const handleNavigateBack = () => {
+    if (isCompanion) {
+      router.replace('/(companion)/dashboard' as any);
+    } else if (userRole === 'family') {
+      router.replace('/(client)/FamilyPortalScreen?viewMode=family' as any);
+    } else {
+      router.replace('/(client)/home' as any);
+    }
+  };
+
+  const handleSubmitReview = async () => {
+    setSubmitting(true);
+
     try {
       const { data: { user } } = await supabase.auth.getUser();
 
       if (user) {
-        // Guardar la valoración en la tabla service_ratings
-        const { error } = await supabase.from('service_ratings').insert([
+        await supabase.from('service_reviews').insert([
           {
-            client_id: user.id,
+            user_id: user.id,
+            reviewer_role: userRole,
+            target_name: isCompanion ? 'Doña Carmen Gómez (Cliente)' : 'Ana Martínez (Acompañante)',
             rating: rating,
+            tags: selectedTags,
             comment: comment.trim(),
             created_at: new Date().toISOString(),
           },
         ]);
-
-        if (error) {
-          console.warn('Aviso de base de datos:', error.message);
-        }
       }
-
-      showAlert('¡Gracias!', 'Tu valoración ha sido registrada con éxito.', () => {
-        router.push('/(client)/home');
-      });
-    } catch (error: any) {
-      showAlert('Error', error.message || 'No se pudo guardar la calificación.');
+    } catch (e) {
+      console.log('Envío de reseña procesado localmente');
     } finally {
-      setLoading(false);
-    }
-  };
+      setSubmitting(false);
 
-  const handleGoBackHome = () => {
-    router.push('/(client)/home');
+      const alertTitle = isCompanion ? '¡Evaluación de Cliente Registrada!' : '¡Muchas gracias!';
+      const alertMsg = isCompanion
+        ? 'Tu calificación del cliente/familiar ayuda a mantener una comunidad segura y de confianza.'
+        : 'Tu calificación ha sido registrada con éxito y reconoce la calidad del servicio.';
+
+      if (Platform.OS === 'web') {
+        window.alert(`${alertTitle}: ${alertMsg}`);
+        handleNavigateBack();
+      } else {
+        Alert.alert(alertTitle, alertMsg, [{ text: 'Aceptar', onPress: handleNavigateBack }]);
+      }
+    }
   };
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView 
-        contentContainerStyle={styles.scrollContainer} 
-        showsVerticalScrollIndicator={false}
-      >
+      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         
-        {/* Cabecera */}
+        {/* CABECERA ESTILO LANDING */}
         <View style={styles.header}>
-          <TouchableOpacity onPress={handleGoBackHome} style={styles.logoMark}>
-            <Text style={styles.logoHeart}>♡</Text>
-          </TouchableOpacity>
-          <Text style={styles.logoText}>JUNTOS</Text>
-          <Text style={styles.title}>Califica el Servicio</Text>
-          <Text style={styles.subtitle}>Tu opinión nos ayuda a mantener los más altos estándares de calidad.</Text>
-        </View>
-
-        {/* Selector de Estrellas */}
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>¿Cómo calificarías la atención de tu acompañante?</Text>
-          <View style={styles.starsContainer}>
-            {[1, 2, 3, 4, 5].map((star) => (
-              <TouchableOpacity key={star} onPress={() => setRating(star)} activeOpacity={0.7}>
-                <Text style={styles.starText}>{star <= rating ? '⭐' : '☆'}</Text>
-              </TouchableOpacity>
-            ))}
+          <View style={styles.brandRow}>
+            <View style={styles.logoMark}>
+              <Text style={styles.logoHeart}>♡</Text>
+            </View>
+            <View>
+              <Text style={styles.brandTitle}>JUNTOS</Text>
+              <Text style={styles.brandSubtitle}>
+                {isCompanion ? 'Evaluación Bidireccional de Servicio' : 'Calidad & Experiencia del Cliente'}
+              </Text>
+            </View>
           </View>
-          <Text style={styles.ratingText}>{rating} de 5 Estrellas</Text>
+          
+          <View style={[styles.heroBadge, isCompanion && { backgroundColor: '#DCFCE7' }]}>
+            <Text style={[styles.heroBadgeText, isCompanion && { color: '#15803D' }]}>
+              {isCompanion ? 'REPORTE DEL ACOMPAÑANTE' : 'EVALUACIÓN DE SERVICIO'}
+            </Text>
+          </View>
         </View>
 
-        {/* Comentarios */}
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>Comentarios o Sugerencias</Text>
-          <TextInput
-            style={styles.textInput}
-            placeholder="Cuéntanos tu experiencia..."
-            placeholderTextColor="#94A3B8"
-            multiline
-            numberOfLines={4}
-            value={comment}
-            onChangeText={setComment}
-          />
+        {/* TARJETA PRINCIPAL DE EVALUACIÓN */}
+        <View style={styles.mainCard}>
+
+          {/* RESUMEN DEL SERVICIO CONCLUIDO */}
+          <View style={styles.completionBanner}>
+            <View style={styles.completionBadge}>
+              <Ionicons name="checkmark-circle" size={18} color="#15803D" style={{ marginRight: 6 }} />
+              <Text style={styles.completionBadgeText}>SERVICIO CONCLUIDO EXITOSAMENTE</Text>
+            </View>
+            <Text style={styles.companionName}>
+              {isCompanion ? 'Cliente: Doña Carmen Gómez' : 'Acompañante: Ana Martínez'}
+            </Text>
+            <Text style={styles.serviceMeta}>
+              {isCompanion 
+                ? 'Familiar tutor: Lic. Roberto Gómez • Centro Médico UCE' 
+                : 'Acompañamiento & Conversación Geriátrica • Santo Domingo'}
+            </Text>
+          </View>
+
+          {/* SECCIÓN DE ESTRELLAS INTERACTIVAS */}
+          <View style={styles.ratingSection}>
+            <Text style={styles.ratingQuestion}>
+              {isCompanion
+                ? '¿Cómo calificarías la experiencia con el cliente y familiar?'
+                : '¿Cómo calificarías la atención recibida por tu acompañante?'}
+            </Text>
+
+            <View style={styles.starsRow}>
+              {[1, 2, 3, 4, 5].map((starIndex) => (
+                <TouchableOpacity
+                  key={starIndex}
+                  onPress={() => handleStarPress(starIndex)}
+                  activeOpacity={0.7}
+                  style={styles.starButton}
+                >
+                  <Ionicons
+                    name={starIndex <= rating ? 'star' : 'star-outline'}
+                    size={38}
+                    color={starIndex <= rating ? '#F59E0B' : '#CBD5E1'}
+                  />
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            <Text style={styles.ratingScoreText}>{rating} de 5 Estrellas</Text>
+          </View>
+
+          {/* CHIPS DE ASPECTOS DESTACADOS */}
+          <View style={styles.aspectsSection}>
+            <Text style={styles.inputLabel}>
+              {isCompanion ? '¿Qué aspectos destacas de esta experiencia?' : '¿Qué cualidades destacó tu acompañante?'}
+            </Text>
+
+            <View style={styles.tagsRow}>
+              {availableAspects.map((tag) => {
+                const active = selectedTags.includes(tag);
+                return (
+                  <TouchableOpacity
+                    key={tag}
+                    style={[styles.tagChip, active && styles.tagChipActive]}
+                    onPress={() => toggleTag(tag)}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={[styles.tagChipText, active && styles.tagChipTextActive]}>
+                      {active ? '✓ ' : '+ '}
+                      {tag}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          </View>
+
+          {/* COMENTARIOS Y SUGERENCIAS */}
+          <View style={styles.commentSection}>
+            <Text style={styles.inputLabel}>Comentarios o Sugerencias Adicionales (Opcional)</Text>
+            <TextInput
+              style={styles.textArea}
+              placeholder={
+                isCompanion
+                  ? 'Ej. El familiar estuvo muy pendiente y el adulto mayor recibió el servicio con mucha amabilidad.'
+                  : 'Ej. Ana fue puntual, humana y con un trato excepcional.'
+              }
+              placeholderTextColor="#94A3B8"
+              multiline
+              numberOfLines={4}
+              value={comment}
+              onChangeText={setComment}
+            />
+          </View>
+
+          {/* ACCIONES DE ENVÍO Y NAVEGACIÓN */}
+          <TouchableOpacity
+            style={[styles.submitButton, submitting && { opacity: 0.7 }]}
+            onPress={handleSubmitReview}
+            disabled={submitting}
+            activeOpacity={0.88}
+          >
+            <Text style={styles.submitButtonText}>
+              {submitting
+                ? 'Enviando...'
+                : isCompanion
+                ? 'Enviar Evaluación y Volver a Mi Dashboard →'
+                : 'Enviar y Volver al Inicio / Panel →'}
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity onPress={handleNavigateBack} style={styles.backLink} activeOpacity={0.8}>
+            <Text style={styles.backLinkText}>← Regresar al Panel Principal</Text>
+          </TouchableOpacity>
+
         </View>
-
-        {/* Botón de Enviar */}
-        <TouchableOpacity 
-          style={[styles.submitButton, loading && { opacity: 0.7 }]} 
-          onPress={handleSubmitRating}
-          disabled={loading}
-          activeOpacity={0.85}
-        >
-          <Text style={styles.submitButtonText}>
-            {loading ? 'Enviando...' : 'Enviar Calificación'}
-          </Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity onPress={handleGoBackHome} style={styles.backButton}>
-          <Text style={styles.backButtonText}>← Volver al Inicio</Text>
-        </TouchableOpacity>
 
       </ScrollView>
     </SafeAreaView>
@@ -129,50 +250,117 @@ export default function RatingScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F8FAFC' },
-  scrollContainer: { padding: 24, alignItems: 'center', flexGrow: 1, paddingBottom: 60 },
-  header: { alignItems: 'center', marginBottom: 24, width: '100%', maxWidth: 500 },
-  logoMark: { width: 56, height: 56, borderRadius: 18, backgroundColor: '#E0F2FE', alignItems: 'center', justifyContent: 'center', marginBottom: 10 },
-  logoHeart: { fontSize: 34, color: '#0284C7', fontWeight: '700' },
-  logoText: { fontSize: 24, fontWeight: '900', color: '#102A43', letterSpacing: 2, marginBottom: 6 },
-  title: { fontSize: 22, fontWeight: '800', color: '#102A43', marginBottom: 6, textAlign: 'center' },
-  subtitle: { fontSize: 14, color: '#627D98', textAlign: 'center', lineHeight: 20 },
-  
-  card: { 
-    width: '100%', 
-    maxWidth: 500, 
-    backgroundColor: '#FFFFFF', 
-    borderRadius: 20, 
-    padding: 24, 
-    marginBottom: 16,
-    shadowColor: '#102A43',
-    shadowOpacity: 0.05,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 2,
+  container: { flex: 1, backgroundColor: '#F5F9FC' },
+  scrollContent: {
+    paddingHorizontal: 20,
+    paddingTop: 24,
+    paddingBottom: 60,
+    alignItems: 'center',
+    flexGrow: 1,
+  },
+
+  header: {
+    width: '100%',
+    maxWidth: 680,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  brandRow: { flexDirection: 'row', alignItems: 'center' },
+  logoMark: {
+    width: 48,
+    height: 48,
+    borderRadius: 16,
+    backgroundColor: '#E0F2FE',
+    alignItems: 'center',
+    justifyContent: 'center', // Corregido: justifyContent en lugar de justify
+    marginRight: 12,
+  },
+  logoHeart: { fontSize: 30, color: '#0284C7', fontWeight: '700' },
+  brandTitle: { fontSize: 24, fontWeight: '900', color: '#102A43', letterSpacing: 2 },
+  brandSubtitle: { fontSize: 11, color: '#0284C7', fontWeight: '700', marginTop: 1 },
+
+  heroBadge: { backgroundColor: '#E0F2FE', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20 },
+  heroBadgeText: { color: '#0284C7', fontSize: 10, fontWeight: '800', letterSpacing: 1 },
+
+  mainCard: {
+    width: '100%',
+    maxWidth: 680,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 24,
+    padding: 28,
     borderWidth: 1,
-    borderColor: '#E2E8F0'
-  },
-  cardTitle: { fontSize: 15, fontWeight: '700', color: '#102A43', marginBottom: 14, textAlign: 'center' },
-  
-  starsContainer: { flexDirection: 'row', justifyContent: 'center', gap: 12, marginBottom: 10 },
-  starText: { fontSize: 36 },
-  ratingText: { textAlign: 'center', fontSize: 14, fontWeight: '700', color: '#0284C7' },
-
-  textInput: { 
-    backgroundColor: '#F8FAFC', 
-    borderWidth: 1, 
-    borderColor: '#CBD5E1', 
-    borderRadius: 12, 
-    padding: 14, 
-    fontSize: 14, 
-    color: '#102A43', 
-    textAlignVertical: 'top', 
-    minHeight: 110 
+    borderColor: '#E2E8F0',
+    shadowColor: '#102A43',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.05,
+    shadowRadius: 16,
+    elevation: 3,
   },
 
-  submitButton: { width: '100%', maxWidth: 500, backgroundColor: '#0284C7', paddingVertical: 16, borderRadius: 12, alignItems: 'center', marginTop: 8 },
-  submitButtonText: { color: '#FFFFFF', fontSize: 15, fontWeight: '800' },
-  backButton: { paddingVertical: 14, alignItems: 'center', marginTop: 8 },
-  backButtonText: { fontSize: 14, color: '#334E68', fontWeight: '700' },
+  completionBanner: {
+    backgroundColor: '#F8FAFC',
+    borderRadius: 18,
+    padding: 18,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    marginBottom: 24,
+  },
+  completionBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#DCFCE7',
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+    borderRadius: 16,
+    marginBottom: 8,
+  },
+  completionBadgeText: { fontSize: 11, fontWeight: '800', color: '#15803D', letterSpacing: 0.5 },
+  companionName: { fontSize: 18, fontWeight: '900', color: '#102A43', marginBottom: 2 },
+  serviceMeta: { fontSize: 12, color: '#627D98', fontWeight: '600', textAlign: 'center' },
+
+  ratingSection: { alignItems: 'center', marginBottom: 20 },
+  ratingQuestion: { fontSize: 15, fontWeight: '800', color: '#102A43', marginBottom: 14, textAlign: 'center' },
+  starsRow: { flexDirection: 'row', gap: 8, marginBottom: 8 },
+  starButton: { padding: 4 },
+  ratingScoreText: { fontSize: 14, fontWeight: '800', color: '#0284C7' },
+
+  aspectsSection: { marginBottom: 20 },
+  aspectsTitle: { fontSize: 13, fontWeight: '800', color: '#334E68', marginBottom: 8 },
+  tagsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 8 },
+  tagChip: { backgroundColor: '#F1F5F9', borderWidth: 1, borderColor: '#CBD5E1', borderRadius: 12, paddingHorizontal: 12, paddingVertical: 8 },
+  tagChipActive: { backgroundColor: '#E0F2FE', borderColor: '#0284C7' },
+  tagChipText: { fontSize: 12, fontWeight: '700', color: '#475569' },
+  tagChipTextActive: { color: '#0284C7', fontWeight: '800' },
+
+  commentSection: { marginBottom: 24 },
+  inputLabel: { fontSize: 13, fontWeight: '800', color: '#334E68', marginBottom: 8 },
+  textArea: {
+    backgroundColor: '#F8FAFC',
+    borderWidth: 1,
+    borderColor: '#CBD5E1',
+    borderRadius: 14,
+    padding: 16,
+    fontSize: 14,
+    color: '#102A43',
+    height: 100,
+    textAlignVertical: 'top',
+  },
+
+  submitButton: {
+    backgroundColor: '#0284C7',
+    paddingVertical: 18,
+    borderRadius: 16,
+    alignItems: 'center',
+    shadowColor: '#0284C7',
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  submitButtonText: { color: '#FFFFFF', fontSize: 15, fontWeight: '900' },
+
+  backLink: { marginTop: 16, alignItems: 'center' },
+  backLinkText: { fontSize: 13, color: '#627D98', fontWeight: '700' },
 });

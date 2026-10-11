@@ -1,235 +1,234 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   StyleSheet,
   SafeAreaView,
   ScrollView,
   View,
   Text,
-  Image,
   TouchableOpacity,
+  Image,
   Platform,
-  Alert,
 } from 'react-native';
 import { useRouter } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 import { supabase } from '../../src/services/supabase';
 
-export default function ClientHomeScreen() {
+export default function HomeScreen() {
   const router = useRouter();
+  const [userRole, setUserRole] = useState<'client' | 'family' | 'companion'>('client');
+
+  useEffect(() => {
+    if (Platform.OS === 'web') {
+      const storedRole = localStorage.getItem('juntos_user_role') as 'client' | 'family' | 'companion';
+      if (storedRole) {
+        setUserRole(storedRole);
+      }
+    }
+  }, []);
+
+  const isCompanion = userRole === 'companion';
+  const isFamily = userRole === 'family';
+  const isClient = userRole === 'client';
 
   const handleLogout = async () => {
     try {
       await supabase.auth.signOut();
-      router.replace('/auth/login');
-    } catch (error: any) {
       if (Platform.OS === 'web') {
-        window.alert('Error al cerrar sesión');
-      } else {
-        Alert.alert('Error', 'No se pudo cerrar sesión.');
+        localStorage.removeItem('juntos_user_role');
       }
+      router.replace('/auth/login');
+    } catch (e) {
+      router.replace('/auth/login');
     }
-  };
-
-  const handleRequestService = () => {
-    router.push('/(client)/select-companion');
   };
 
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         
-        {/* HEADER PRINCIPAL CON ACCESO A PORTAL FAMILIAR */}
+        {/* CABECERA CON LOGO CLIQUEABLE Y CERRAR SESIÓN */}
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.push('/')} style={styles.logoContainer}>
+          <TouchableOpacity 
+            style={styles.brandGroup} 
+            onPress={() => router.push('/')}
+            activeOpacity={0.8}
+          >
             <View style={styles.logoMark}>
               <Text style={styles.logoHeart}>♡</Text>
             </View>
             <View>
               <Text style={styles.brandTitle}>JUNTOS</Text>
-              <Text style={styles.brandSubtitle}>Compañía y Asistencia Cotidiana</Text>
+              <Text style={styles.brandSubtitle}>
+                {isCompanion 
+                  ? 'Panel del Acompañante Verificado' 
+                  : isFamily 
+                  ? 'Portal de Supervisión Familiar' 
+                  : 'Portal del Cliente Directo'}
+              </Text>
             </View>
           </TouchableOpacity>
 
+          {/* ACCIONES SUPERIORES SEGÚN EL ROL EXACTO */}
           <View style={styles.headerActions}>
+            {isClient && (
+              <TouchableOpacity 
+                style={styles.navButton} 
+                onPress={() => router.push({ pathname: '/(client)/FamilyPortalScreen', params: { viewMode: 'client' } })}
+                activeOpacity={0.8}
+              >
+                <Ionicons name="person-outline" size={16} color="#0284C7" style={{ marginRight: 4 }} />
+                <Text style={styles.navButtonText}>Mi Portal Cliente</Text>
+              </TouchableOpacity>
+            )}
+
+            {isFamily && (
+              <TouchableOpacity 
+                style={styles.navButton} 
+                onPress={() => router.push({ pathname: '/(client)/FamilyPortalScreen', params: { viewMode: 'family' } })}
+                activeOpacity={0.8}
+              >
+                <Ionicons name="people-outline" size={16} color="#0284C7" style={{ marginRight: 4 }} />
+                <Text style={styles.navButtonText}>Portal Familiar</Text>
+              </TouchableOpacity>
+            )}
+
+            {isCompanion && (
+              <TouchableOpacity 
+                style={[styles.navButton, { borderColor: '#16A34A', backgroundColor: '#F0FDF4' }]} 
+                onPress={() => router.replace('/(companion)/dashboard' as any)}
+                activeOpacity={0.8}
+              >
+                <Ionicons name="shield-checkmark-outline" size={16} color="#16A34A" style={{ marginRight: 4 }} />
+                <Text style={[styles.navButtonText, { color: '#16A34A' }]}>Mi Dashboard Verificado</Text>
+              </TouchableOpacity>
+            )}
+
             <TouchableOpacity 
-              style={[styles.navChip, styles.familyChip]} 
-              onPress={() => router.push('/(client)/FamilyPortalScreen')}
+              style={styles.iconButton} 
+              onPress={() => router.push('/chat/internal-chat' as any)}
+              activeOpacity={0.8}
             >
-              <Text style={styles.familyChipText}>👥 Portal Familiar</Text>
+              <Ionicons name="chatbubbles-outline" size={18} color="#0284C7" />
             </TouchableOpacity>
 
             <TouchableOpacity 
-              style={styles.navChip} 
-              onPress={() => router.push('/chat/internal-chat')}
+              style={styles.iconButton} 
+              onPress={() => router.push('/notifications/push-notifications' as any)}
+              activeOpacity={0.8}
             >
-              <Text style={styles.navChipText}>💬 Chat</Text>
+              <Ionicons name="notifications-outline" size={18} color="#0284C7" />
             </TouchableOpacity>
 
-            <TouchableOpacity 
-              style={styles.navChip} 
-              onPress={() => router.push('/notifications/push-notifications')}
-            >
-              <Text style={styles.navChipText}>🔔 Avisos</Text>
+            <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout} activeOpacity={0.8}>
+              <Ionicons name="log-out-outline" size={16} color="#DC2626" style={{ marginRight: 4 }} />
+              <Text style={styles.logoutBtnText}>Salir</Text>
             </TouchableOpacity>
           </View>
         </View>
 
-        {/* HERO BANNER COMERCIAL */}
+        {/* HERO BANNER PRINCIPAL */}
         <View style={styles.heroCard}>
           <View style={styles.heroTextContent}>
-            <View style={styles.badge}>
-              <Text style={styles.badgeText}>ACOMPAÑAMIENTO NO CLÍNICO</Text>
+            <View style={styles.badgeContainer}>
+              <Text style={styles.badgeText}>
+                {isCompanion 
+                  ? 'PERFIL ACOMPAÑANTE VERIFICADO' 
+                  : isFamily 
+                  ? 'SUPERVISIÓN FAMILIAR' 
+                  : 'ACOMPAÑAMIENTO PARA TI'}
+              </Text>
             </View>
-            <Text style={styles.heroTitle}>¿Qué compañía necesita hoy tu familiar?</Text>
-            <Text style={styles.heroSubtitle}>
-              Conecta en minutos con personas de confianza, evaluadas y verificadas para brindar trato humano, conversación y apoyo cotidiano.
+
+            <Text style={styles.heroTitle}>
+              {isCompanion 
+                ? 'Panel Operativo para Acompañantes' 
+                : isFamily 
+                ? '¿Qué compañía necesitas hoy para tu familiar?' 
+                : '¿Qué compañía necesitas hoy para ti?'}
             </Text>
 
-            <TouchableOpacity 
-              style={styles.primaryCtaButton} 
-              onPress={handleRequestService}
-              activeOpacity={0.88}
-            >
-              <Text style={styles.primaryCtaText}>Solicitar Acompañante Ahora</Text>
-              <Text style={styles.primaryCtaArrow}>→</Text>
-            </TouchableOpacity>
+            <Text style={styles.heroDesc}>
+              {isCompanion 
+                ? 'Gestiona tus servicios asignados, reportes de asistencia y mantén comunicación directa con la mesa de operaciones.'
+                : 'Conecta en minutos con personas de confianza, evaluadas y verificadas para brindar trato humano, conversación y apoyo cotidiano.'}
+            </Text>
+
+            <View style={styles.heroButtonsRow}>
+              {isClient && (
+                <TouchableOpacity 
+                  style={styles.primaryBtn} 
+                  onPress={() => router.push({ pathname: '/(client)/select-companion', params: { requested_by: 'client' } })}
+                  activeOpacity={0.85}
+                >
+                  <Text style={styles.primaryBtnText}>Solicitar Acompañamiento →</Text>
+                </TouchableOpacity>
+              )}
+
+              {isFamily && (
+                <TouchableOpacity 
+                  style={styles.primaryBtn} 
+                  onPress={() => router.push({ pathname: '/(client)/select-companion', params: { requested_by: 'family' } })}
+                  activeOpacity={0.85}
+                >
+                  <Text style={styles.primaryBtnText}>Solicitar para mi Familiar →</Text>
+                </TouchableOpacity>
+              )}
+
+              {isCompanion && (
+                <TouchableOpacity 
+                  style={[styles.primaryBtn, { backgroundColor: '#16A34A' }]} 
+                  onPress={() => router.replace('/(companion)/dashboard' as any)}
+                  activeOpacity={0.85}
+                >
+                  <Text style={styles.primaryBtnText}>Ir a Mi Panel de Acompañante →</Text>
+                </TouchableOpacity>
+              )}
+            </View>
           </View>
 
-          <Image
-            source={{
-              uri: 'https://images.unsplash.com/photo-1576765608535-5f04d1e3f289?q=80&w=800&auto=format&fit=crop',
-            }}
-            style={styles.heroImage}
-            resizeMode="cover"
-          />
+          {/* CONTENEDOR DE LA IMAGEN DE MANOS DE APOYO */}
+          <View style={styles.heroImageContainer}>
+            <Image 
+              source={{ uri: 'https://images.unsplash.com/photo-1584515979956-d9f6e5d09982?q=80&w=800' }} 
+              style={styles.heroImage} 
+              resizeMode="cover"
+            />
+          </View>
         </View>
 
-        {/* CATEGORÍAS DE SERVICIOS POPULARES */}
-        <View style={styles.sectionContainer}>
-          <Text style={styles.sectionTitle}>Apoyo para la Vida Cotidiana</Text>
-          <Text style={styles.sectionSubtitle}>Servicios de asistencia recreativa, movilidad y compañía en casa</Text>
+        {/* SECCIÓN DE APOYO COTIDIANO */}
+        {!isCompanion && (
+          <View style={styles.sectionContainer}>
+            <Text style={styles.sectionTitle}>Apoyo para la Vida Cotidiana</Text>
+            <Text style={styles.sectionSubtitle}>Servicios de asistencia recreativa, movilidad y compañía en casa.</Text>
 
-          <View style={styles.servicesGrid}>
-            <TouchableOpacity style={styles.serviceCard} onPress={handleRequestService}>
-              <View style={[styles.serviceIconBg, { backgroundColor: '#E0F2FE' }]}>
-                <Text style={styles.serviceIcon}>👵</Text>
+            <View style={styles.servicesGrid}>
+              <View style={styles.serviceBox}>
+                <Text style={styles.serviceIcon}>🏠</Text>
+                <Text style={styles.serviceBoxTitle}>Compañía en Casa</Text>
+                <Text style={styles.serviceBoxDesc}>Conversación, juegos de mesa, lectura y estimulación activa.</Text>
               </View>
-              <Text style={styles.serviceTitle}>Compañía en Casa</Text>
-              <Text style={styles.serviceDesc}>Conversación, juegos de mesa, lectura y estimulación activa.</Text>
-            </TouchableOpacity>
 
-            <TouchableOpacity style={styles.serviceCard} onPress={handleRequestService}>
-              <View style={[styles.serviceIconBg, { backgroundColor: '#DCFCE7' }]}>
+              <View style={styles.serviceBox}>
                 <Text style={styles.serviceIcon}>🚶‍♂️</Text>
+                <Text style={styles.serviceBoxTitle}>Paseos y Movilidad</Text>
+                <Text style={styles.serviceBoxDesc}>Caminatas tranquilas, visitas al parque y acompañamiento seguro.</Text>
               </View>
-              <Text style={styles.serviceTitle}>Paseos y Movilidad</Text>
-              <Text style={styles.serviceDesc}>Caminatas tranquilas, visitas al parque y acompañamiento seguro.</Text>
-            </TouchableOpacity>
 
-            <TouchableOpacity style={styles.serviceCard} onPress={handleRequestService}>
-              <View style={[styles.serviceIconBg, { backgroundColor: '#FEF3C7' }]}>
-                <Text style={styles.serviceIcon}>🏬</Text>
+              <View style={styles.serviceBox}>
+                <Text style={styles.serviceIcon}>🛒</Text>
+                <Text style={styles.serviceBoxTitle}>Diligencias y Compras</Text>
+                <Text style={styles.serviceBoxDesc}>Acompañamiento a supermercados, tiendas y recados personales.</Text>
               </View>
-              <Text style={styles.serviceTitle}>Diligencias y Compras</Text>
-              <Text style={styles.serviceDesc}>Acompañamiento a supermercados, tiendas y recados personales.</Text>
-            </TouchableOpacity>
 
-            <TouchableOpacity style={styles.serviceCard} onPress={handleRequestService}>
-              <View style={[styles.serviceIconBg, { backgroundColor: '#F3E8FF' }]}>
-                <Text style={styles.serviceIcon}>📍</Text>
+              <View style={styles.serviceBox}>
+                <Text style={styles.serviceIcon}>🎉</Text>
+                <Text style={styles.serviceBoxTitle}>Acompañamiento en Eventos</Text>
+                <Text style={styles.serviceBoxDesc}>Presencia amigable en reuniones familiares, iglesias y actividades socializadoras.</Text>
               </View>
-              <Text style={styles.serviceTitle}>Acompañamiento en Eventos</Text>
-              <Text style={styles.serviceDesc}>Presencia amigable en reuniones familiares, iglesias y actividades socializadoras.</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        {/* ACOMPAÑANTES DESTACADOS Y VERIFICADOS */}
-        <View style={styles.sectionContainer}>
-          <View style={styles.sectionHeaderRow}>
-            <Text style={styles.sectionTitle}>Red de Acompañantes Verificados</Text>
-            <TouchableOpacity onPress={handleRequestService}>
-              <Text style={styles.seeAllText}>Ver todos →</Text>
-            </TouchableOpacity>
-          </View>
-
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.horizontalScroll}>
-            <View style={styles.companionCard}>
-              <Image
-                source={{ uri: 'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?q=80&w=400' }}
-                style={styles.companionPhoto}
-              />
-              <View style={styles.companionBadge}>
-                <Text style={styles.companionBadgeText}>⭐ 4.9 (48 acompañamientos)</Text>
-              </View>
-              <Text style={styles.companionName}>Ana Martínez</Text>
-              <Text style={styles.companionRole}>Especialista en Lectura y Conversación</Text>
-              <TouchableOpacity style={styles.companionBtn} onPress={handleRequestService}>
-                <Text style={styles.companionBtnText}>Reservar</Text>
-              </TouchableOpacity>
             </View>
-
-            <View style={styles.companionCard}>
-              <Image
-                source={{ uri: 'https://images.unsplash.com/photo-1622253692010-333f2da6031d?q=80&w=400' }}
-                style={styles.companionPhoto}
-              />
-              <View style={styles.companionBadge}>
-                <Text style={styles.companionBadgeText}>⭐ 5.0 (32 acompañamientos)</Text>
-              </View>
-              <Text style={styles.companionName}>Carlos Gómez</Text>
-              <Text style={styles.companionRole}>Acompañante de Paseos y Recados</Text>
-              <TouchableOpacity style={styles.companionBtn} onPress={handleRequestService}>
-                <Text style={styles.companionBtnText}>Reservar</Text>
-              </TouchableOpacity>
-            </View>
-
-            <View style={styles.companionCard}>
-              <Image
-                source={{ uri: 'https://images.unsplash.com/photo-1594824813572-c2f8f8ef1923?q=80&w=400' }}
-                style={styles.companionPhoto}
-              />
-              <View style={styles.companionBadge}>
-                <Text style={styles.companionBadgeText}>⭐ 4.8 (19 acompañamientos)</Text>
-              </View>
-              <Text style={styles.companionName}>Laura Peralta</Text>
-              <Text style={styles.companionRole}>Apoyo en Actividades Recreativas</Text>
-              <TouchableOpacity style={styles.companionBtn} onPress={handleRequestService}>
-                <Text style={styles.companionBtnText}>Reservar</Text>
-              </TouchableOpacity>
-            </View>
-          </ScrollView>
-        </View>
-
-        {/* GESTIÓN DE CUENTA Y ACCESOS SECUNDARIOS */}
-        <View style={styles.accountSection}>
-          <Text style={styles.accountSectionTitle}>Gestión de Servicio</Text>
-          <View style={styles.accountRow}>
-            <TouchableOpacity style={styles.accountTile} onPress={() => router.push('/(client)/FamilyPortalScreen')}>
-              <Text style={styles.accountTileIcon}>📊</Text>
-              <Text style={styles.accountTileText}>Portal de Supervisión Familiar</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity style={styles.accountTile} onPress={() => router.push('/(client)/care-preferences')}>
-              <Text style={styles.accountTileIcon}>⚙️</Text>
-              <Text style={styles.accountTileText}>Preferencias del Servicio</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity style={styles.accountTile} onPress={() => router.push('/wallet/payment-wallet')}>
-              <Text style={styles.accountTileIcon}>💳</Text>
-              <Text style={styles.accountTileText}>Billetera y Métodos de Pago</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity style={styles.accountTile} onPress={() => router.push('/(client)/favorite-locations')}>
-              <Text style={styles.accountTileIcon}>📍</Text>
-              <Text style={styles.accountTileText}>Destinos Frecuentes</Text>
-            </TouchableOpacity>
           </View>
-        </View>
-
-        {/* BOTÓN CERRAR SESIÓN */}
-        <TouchableOpacity style={styles.logoutButton} onPress={handleLogout} activeOpacity={0.85}>
-          <Text style={styles.logoutButtonText}>Cerrar Sesión Segura</Text>
-        </TouchableOpacity>
+        )}
 
       </ScrollView>
     </SafeAreaView>
@@ -237,85 +236,56 @@ export default function ClientHomeScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F8FAFC' },
-  scrollContent: { paddingHorizontal: 20, paddingTop: 20, paddingBottom: 50, alignItems: 'center' },
+  container: { flex: 1, backgroundColor: '#F5F9FC' },
+  scrollContent: { paddingHorizontal: 24, paddingTop: 24, paddingBottom: 60, alignItems: 'center', flexGrow: 1 },
+
+  header: { width: '100%', maxWidth: 1100, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 30, flexWrap: 'wrap', gap: 15 },
+  brandGroup: { flexDirection: 'row', alignItems: 'center' },
+  logoMark: { width: 44, height: 44, borderRadius: 14, backgroundColor: '#E0F2FE', alignItems: 'center', justifyContent: 'center', marginRight: 12 },
+  logoHeart: { fontSize: 26, color: '#0284C7', fontWeight: '700' },
+  brandTitle: { fontSize: 20, fontWeight: '900', color: '#102A43', letterSpacing: 1.5 },
+  brandSubtitle: { fontSize: 11, color: '#0284C7', fontWeight: '700' },
+
+  headerActions: { flexDirection: 'row', alignItems: 'center', gap: 10, flexWrap: 'wrap' },
+  navButton: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#BAE6FD', paddingHorizontal: 14, paddingVertical: 8, borderRadius: 12 },
+  navButtonText: { fontSize: 12, fontWeight: '800', color: '#0284C7' },
+  iconButton: { width: 36, height: 36, borderRadius: 12, backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#BAE6FD', alignItems: 'center', justifyContent: 'center' },
   
-  header: {
-    width: '100%',
-    maxWidth: 1180,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 24,
+  logoutBtn: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#FEF2F2', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 12, borderWidth: 1, borderColor: '#FCA5A5' },
+  logoutBtnText: { color: '#DC2626', fontSize: 12, fontWeight: '800' },
+
+  heroCard: { width: '100%', maxWidth: 1100, backgroundColor: '#FFFFFF', borderRadius: 24, padding: 36, flexDirection: 'row', borderWidth: 1, borderColor: '#E2E8F0', shadowColor: '#102A43', shadowOpacity: 0.04, shadowRadius: 16, elevation: 2, marginBottom: 30, alignItems: 'center', flexWrap: 'wrap', gap: 24 },
+  heroTextContent: { flex: 1, minWidth: 280 },
+  badgeContainer: { backgroundColor: '#E0F2FE', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 16, alignSelf: 'flex-start', marginBottom: 12 },
+  badgeText: { color: '#0284C7', fontSize: 11, fontWeight: '900', letterSpacing: 0.5 },
+  heroTitle: { fontSize: 26, fontWeight: '900', color: '#102A43', marginBottom: 10, lineHeight: 34 },
+  heroDesc: { fontSize: 14, color: '#627D98', lineHeight: 22, marginBottom: 20 },
+  heroButtonsRow: { flexDirection: 'row', gap: 12, flexWrap: 'wrap' },
+  primaryBtn: { backgroundColor: '#0284C7', paddingVertical: 14, paddingHorizontal: 20, borderRadius: 14, alignItems: 'center' },
+  primaryBtnText: { color: '#FFFFFF', fontSize: 14, fontWeight: '900' },
+
+  heroImageContainer: { 
+    width: 340, 
+    height: 230, 
+    borderRadius: 20, 
+    overflow: 'hidden', 
+    borderWidth: 1, 
+    borderColor: '#E2E8F0', 
+    backgroundColor: '#E2E8F0',
+    display: 'flex',
   },
-  logoContainer: { flexDirection: 'row', alignItems: 'center' },
-  logoMark: { width: 46, height: 46, borderRadius: 14, backgroundColor: '#E0F2FE', alignItems: 'center', justifyContent: 'center', marginRight: 10 },
-  logoHeart: { fontSize: 28, color: '#0284C7', fontWeight: '700' },
-  brandTitle: { fontSize: 22, fontWeight: '900', color: '#102A43', letterSpacing: 2 },
-  brandSubtitle: { fontSize: 11, color: '#0284C7', fontWeight: '600' },
-  
-  headerActions: { flexDirection: 'row', gap: 8, flexWrap: 'wrap' },
-  navChip: { backgroundColor: '#FFFFFF', paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20, borderWidth: 1, borderColor: '#E2E8F0' },
-  navChipText: { fontSize: 13, fontWeight: '700', color: '#334E68' },
-  familyChip: { backgroundColor: '#E0F2FE', borderColor: '#0284C7' },
-  familyChipText: { fontSize: 13, fontWeight: '800', color: '#0284C7' },
-
-  heroCard: {
-    width: '100%',
-    maxWidth: 1180,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 24,
-    padding: 28,
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 35,
-    shadowColor: '#102A43',
-    shadowOpacity: 0.06,
-    shadowRadius: 16,
-    elevation: 3,
+  heroImage: { 
+    width: '100%', 
+    height: '100%',
+    display: 'flex',
   },
-  heroTextContent: { flex: 1, minWidth: 280, marginRight: 20 },
-  badge: { alignSelf: 'flex-start', backgroundColor: '#E0F2FE', paddingHorizontal: 12, paddingVertical: 5, borderRadius: 20, marginBottom: 12 },
-  badgeText: { color: '#0284C7', fontSize: 11, fontWeight: '800', letterSpacing: 1 },
-  heroTitle: { fontSize: 28, fontWeight: '900', color: '#102A43', lineHeight: 36, marginBottom: 12 },
-  heroSubtitle: { fontSize: 15, color: '#486581', lineHeight: 22, marginBottom: 20 },
-  primaryCtaButton: { backgroundColor: '#0284C7', flexDirection: 'row', alignItems: 'center', paddingVertical: 14, paddingHorizontal: 24, borderRadius: 14, alignSelf: 'flex-start' },
-  primaryCtaText: { color: '#FFFFFF', fontSize: 15, fontWeight: '800', marginRight: 8 },
-  primaryCtaArrow: { color: '#FFFFFF', fontSize: 18, fontWeight: '800' },
-  heroImage: { width: '100%', maxWidth: 360, height: 220, borderRadius: 18, marginTop: 15 },
 
-  sectionContainer: { width: '100%', maxWidth: 1180, marginBottom: 35 },
-  sectionHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
-  sectionTitle: { fontSize: 22, fontWeight: '900', color: '#102A43' },
-  sectionSubtitle: { fontSize: 14, color: '#627D98', marginTop: 2, marginBottom: 18 },
-  seeAllText: { fontSize: 14, fontWeight: '700', color: '#0284C7' },
-
-  servicesGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 16 },
-  serviceCard: { flex: 1, minWidth: 240, backgroundColor: '#FFFFFF', padding: 20, borderRadius: 18, borderWidth: 1, borderColor: '#F1F5F9' },
-  serviceIconBg: { width: 48, height: 48, borderRadius: 14, alignItems: 'center', justifyContent: 'center', marginBottom: 12 },
-  serviceIcon: { fontSize: 24 },
-  serviceTitle: { fontSize: 16, fontWeight: '800', color: '#102A43', marginBottom: 6 },
-  serviceDesc: { fontSize: 13, color: '#627D98', lineHeight: 18 },
-
-  horizontalScroll: { paddingRight: 20, gap: 16 },
-  companionCard: { width: 220, backgroundColor: '#FFFFFF', borderRadius: 18, padding: 16, alignItems: 'center', borderWidth: 1, borderColor: '#F1F5F9' },
-  companionPhoto: { width: 80, height: 80, borderRadius: 40, marginBottom: 10 },
-  companionBadge: { backgroundColor: '#FEF3C7', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 12, marginBottom: 8 },
-  companionBadgeText: { fontSize: 11, fontWeight: '800', color: '#D97706' },
-  companionName: { fontSize: 15, fontWeight: '800', color: '#102A43', marginBottom: 2 },
-  companionRole: { fontSize: 12, color: '#627D98', marginBottom: 14, textAlign: 'center' },
-  companionBtn: { backgroundColor: '#0284C7', paddingVertical: 8, width: '100%', borderRadius: 10, alignItems: 'center' },
-  companionBtnText: { color: '#FFFFFF', fontSize: 13, fontWeight: '700' },
-
-  accountSection: { width: '100%', maxWidth: 1180, marginBottom: 30 },
-  accountSectionTitle: { fontSize: 18, fontWeight: '800', color: '#102A43', marginBottom: 14 },
-  accountRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
-  accountTile: { flex: 1, minWidth: 200, backgroundColor: '#FFFFFF', flexDirection: 'row', alignItems: 'center', padding: 14, borderRadius: 14, borderWidth: 1, borderColor: '#E2E8F0' },
-  accountTileIcon: { fontSize: 20, marginRight: 10 },
-  accountTileText: { fontSize: 13, fontWeight: '700', color: '#334E68' },
-
-  logoutButton: { width: '100%', maxWidth: 1180, backgroundColor: '#FEF2F2', borderWidth: 1, borderColor: '#FCA5A5', paddingVertical: 14, borderRadius: 14, alignItems: 'center', marginTop: 10 },
-  logoutButtonText: { color: '#DC2626', fontSize: 14, fontWeight: '800' },
+  sectionContainer: { width: '100%', maxWidth: 1100, marginTop: 10 },
+  sectionTitle: { fontSize: 22, fontWeight: '900', color: '#102A43', marginBottom: 4 },
+  sectionSubtitle: { fontSize: 14, color: '#627D98', marginBottom: 20 },
+  servicesGrid: { flexDirection: 'row', gap: 16, flexWrap: 'wrap' },
+  serviceBox: { flex: 1, minWidth: 220, backgroundColor: '#FFFFFF', borderRadius: 18, padding: 20, borderWidth: 1, borderColor: '#E2E8F0' },
+  serviceIcon: { fontSize: 28, marginBottom: 10 },
+  serviceBoxTitle: { fontSize: 15, fontWeight: '900', color: '#102A43', marginBottom: 6 },
+  serviceBoxDesc: { fontSize: 12, color: '#627D98', lineHeight: 18 },
 });

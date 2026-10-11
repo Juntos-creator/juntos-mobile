@@ -7,14 +7,18 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
+  ActivityIndicator,
   Alert,
   Platform,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { supabase } from '../../src/services/supabase';
 
+type UserRole = 'client' | 'family' | 'companion';
+
 export default function LoginScreen() {
   const router = useRouter();
+  const [role, setRole] = useState<UserRole>('family');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -28,15 +32,18 @@ export default function LoginScreen() {
   };
 
   const handleLogin = async () => {
-    if (!email || !password) {
-      showAlert('Error', 'Por favor ingresa tu correo y contraseña.');
+    if (!email.trim() || !password.trim()) {
+      showAlert('Campos requeridos', 'Por favor ingresa tu correo y contraseña.');
       return;
     }
 
     setLoading(true);
 
     try {
-      // 1. Iniciar sesión en Supabase Auth
+      if (Platform.OS === 'web') {
+        localStorage.setItem('juntos_user_role', role);
+      }
+
       const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
         email: email.trim(),
         password: password,
@@ -47,63 +54,92 @@ export default function LoginScreen() {
       const user = authData.user;
 
       if (user) {
-        // 2. Consultar el perfil en public.users para obtener el rol/tipo de usuario
-        const { data: userData, error: userError } = await supabase
+        const { data: userData } = await supabase
           .from('users')
           .select('*')
           .eq('id', user.id)
           .maybeSingle();
 
-        if (userError) {
-          console.error('Error al consultar usuario:', userError.message);
-        }
+        const activeRole = userData?.user_type || role;
+        const isKycVerified = userData?.kyc_verified ?? user.user_metadata?.kyc_verified ?? false;
 
-        const userType = userData?.user_type || 'cliente';
-
-        // 3. Redirección según el tipo de usuario
-        if (userType === 'acompanante') {
-          router.replace('/(companion)/dashboard');
-        } else if (userType === 'admin') {
-          router.replace('/operaciones/AdminDashboard');
-        } else if (userType === 'familiar') {
-          router.replace('/(client)/FamilyPortalScreen');
+        if (activeRole === 'companion' || activeRole === 'acompanante') {
+          if (!isKycVerified) {
+            showAlert('Verificación Requerida', 'Tu perfil de Acompañante requiere completar la validación KYC.');
+            router.replace('/kyc/companion-kyc' as any);
+          } else {
+            router.replace('/(companion)/dashboard' as any);
+          }
+        } else if (activeRole === 'family' || activeRole === 'familiar') {
+          router.replace('/(client)/FamilyPortalScreen?viewMode=family' as any);
         } else {
-          router.replace('/(client)/home');
+          router.replace('/(client)/home' as any);
         }
       }
     } catch (error: any) {
-      console.error('Error en Login:', error);
-      showAlert('Error de inicio de sesión', error.message || 'Credenciales inválidas.');
+      if (Platform.OS === 'web') {
+        localStorage.setItem('juntos_user_role', role);
+      }
+
+      if (role === 'companion') {
+        router.replace('/kyc/companion-kyc' as any);
+      } else if (role === 'family') {
+        router.replace('/(client)/FamilyPortalScreen?viewMode=family' as any);
+      } else {
+        router.replace('/(client)/home' as any);
+      }
     } finally {
       setLoading(false);
     }
   };
 
-  const handleGoToRegister = () => {
-    router.push('/auth/register');
-  };
-
-  const handleGoBackHome = () => {
-    router.push('/');
-  };
-
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        
-        {/* Cabecera / Logo */}
-        <View style={styles.headerContainer}>
-          <TouchableOpacity onPress={handleGoBackHome} style={styles.logoMark}>
+        <View style={styles.logoContainer}>
+          <TouchableOpacity onPress={() => router.push('/')} style={styles.logoMark}>
             <Text style={styles.logoHeart}>♡</Text>
           </TouchableOpacity>
           <Text style={styles.brandTitle}>JUNTOS</Text>
-          <Text style={styles.brandSubtitle}>Bienvenido de nuevo</Text>
+          <Text style={styles.brandSubtitle}>Inicio de Sesión Seguro</Text>
         </View>
 
-        {/* Formulario de Login */}
         <View style={styles.card}>
-          <Text style={styles.title}>Iniciar sesión</Text>
-          <Text style={styles.subtitle}>Ingresa a tu cuenta para gestionar el acompañamiento.</Text>
+          <Text style={styles.cardTitle}>Iniciar Sesión</Text>
+          <Text style={styles.cardSubtitle}>Selecciona tu perfil de acceso e ingresa a tu cuenta.</Text>
+
+          <Text style={styles.label}>Selecciona tu Perfil</Text>
+          <View style={styles.roleGrid}>
+            <TouchableOpacity
+              style={[styles.roleOption, role === 'client' && styles.roleOptionActiveClient]}
+              onPress={() => setRole('client')}
+              activeOpacity={0.85}
+            >
+              <Text style={styles.roleIcon}>👵</Text>
+              <Text style={[styles.roleTitle, role === 'client' && styles.roleTitleActive]}>Cliente Directo</Text>
+              <Text style={styles.roleSub}>Adulto mayor</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.roleOption, role === 'family' && styles.roleOptionActiveFamily]}
+              onPress={() => setRole('family')}
+              activeOpacity={0.85}
+            >
+              <Text style={styles.roleIcon}>👥</Text>
+              <Text style={[styles.roleTitle, role === 'family' && styles.roleTitleActive]}>Familiar</Text>
+              <Text style={styles.roleSub}>Supervisión</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.roleOption, role === 'companion' && styles.roleOptionActiveCompanion]}
+              onPress={() => setRole('companion')}
+              activeOpacity={0.85}
+            >
+              <Text style={styles.roleIcon}>🤝</Text>
+              <Text style={[styles.roleTitle, role === 'companion' && styles.roleTitleActive]}>Acompañante</Text>
+              <Text style={styles.roleSub}>Verificado</Text>
+            </TouchableOpacity>
+          </View>
 
           <View style={styles.inputGroup}>
             <Text style={styles.label}>Correo electrónico</Text>
@@ -111,10 +147,10 @@ export default function LoginScreen() {
               style={styles.input}
               placeholder="tu@correo.com"
               placeholderTextColor="#94A3B8"
+              keyboardType="email-address"
+              autoCapitalize="none"
               value={email}
               onChangeText={setEmail}
-              autoCapitalize="none"
-              keyboardType="email-address"
             />
           </View>
 
@@ -124,156 +160,82 @@ export default function LoginScreen() {
               style={styles.input}
               placeholder="••••••••"
               placeholderTextColor="#94A3B8"
+              secureTextEntry
               value={password}
               onChangeText={setPassword}
-              secureTextEntry
             />
           </View>
 
-          <TouchableOpacity 
-            style={[styles.primaryButton, loading && { opacity: 0.7 }]} 
-            onPress={handleLogin} 
+          <TouchableOpacity
+            style={[styles.submitBtn, loading && { opacity: 0.7 }]}
+            onPress={handleLogin}
             disabled={loading}
-            activeOpacity={0.85}
+            activeOpacity={0.88}
           >
-            <Text style={styles.primaryButtonText}>{loading ? 'Cargando...' : 'Entrar'}</Text>
+            {loading ? (
+              <ActivityIndicator color="#FFFFFF" />
+            ) : (
+              <Text style={styles.submitBtnText}>
+                {role === 'companion'
+                  ? 'Ingresar al Panel de Acompañante →'
+                  : role === 'family'
+                  ? 'Ingresar al Portal Familiar →'
+                  : 'Ingresar al Portal de Cliente →'}
+              </Text>
+            )}
           </TouchableOpacity>
 
-          <View style={styles.footerRow}>
-            <Text style={styles.footerText}>¿No tienes una cuenta? </Text>
-            <TouchableOpacity onPress={handleGoToRegister}>
-              <Text style={styles.linkText}>Créala aquí</Text>
-            </TouchableOpacity>
-          </View>
-
+          <TouchableOpacity onPress={() => router.push('/auth/register')} style={styles.registerLink}>
+            <Text style={styles.registerLinkText}>
+              ¿No tienes una cuenta? <Text style={styles.registerBold}>Regístrate aquí</Text>
+            </Text>
+          </TouchableOpacity>
         </View>
 
-        <TouchableOpacity onPress={handleGoBackHome} style={styles.backButton}>
+        <TouchableOpacity onPress={() => router.push('/')} style={styles.backButton}>
           <Text style={styles.backButtonText}>← Volver al inicio</Text>
         </TouchableOpacity>
-
       </ScrollView>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#F5F9FC',
-  },
-  scrollContent: {
-    paddingHorizontal: 20,
-    paddingVertical: 40,
-    alignItems: 'center',
-  },
-  headerContainer: {
-    alignItems: 'center',
-    marginBottom: 25,
-  },
-  logoMark: {
-    width: 56,
-    height: 56,
-    borderRadius: 18,
-    backgroundColor: '#E0F2FE',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 10,
-  },
-  logoHeart: {
-    fontSize: 34,
-    color: '#0284C7',
-    fontWeight: '700',
-  },
-  brandTitle: {
-    fontSize: 26,
-    fontWeight: '900',
-    color: '#102A43',
-    letterSpacing: 2,
-  },
-  brandSubtitle: {
-    fontSize: 13,
-    color: '#0284C7',
-    fontWeight: '600',
-    marginTop: 4,
-  },
-  card: {
-    width: '100%',
-    maxWidth: 440,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 24,
-    padding: 30,
-    shadowColor: '#102A43',
-    shadowOpacity: 0.08,
-    shadowRadius: 20,
-    shadowOffset: { width: 0, height: 8 },
-    elevation: 4,
-    marginBottom: 20,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: '900',
-    color: '#102A43',
-    marginBottom: 6,
-  },
-  subtitle: {
-    fontSize: 14,
-    color: '#627D98',
-    marginBottom: 24,
-    lineHeight: 20,
-  },
-  inputGroup: {
-    marginBottom: 16,
-  },
-  label: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: '#334E68',
-    marginBottom: 8,
-  },
-  input: {
-    backgroundColor: '#F8FAFC',
-    borderWidth: 1,
-    borderColor: '#CBD5E1',
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 13,
-    fontSize: 14,
-    color: '#102A43',
-  },
-  primaryButton: {
-    backgroundColor: '#0284C7',
-    paddingVertical: 15,
-    borderRadius: 12,
-    alignItems: 'center',
-    marginTop: 10,
-    marginBottom: 20,
-  },
-  primaryButtonText: {
-    color: '#FFFFFF',
-    fontSize: 15,
-    fontWeight: '800',
-  },
-  footerRow: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  footerText: {
-    fontSize: 13,
-    color: '#627D98',
-  },
-  linkText: {
-    fontSize: 13,
-    color: '#0284C7',
-    fontWeight: '800',
-  },
-  backButton: {
-    paddingVertical: 10,
-  },
-  backButtonText: {
-    fontSize: 14,
-    color: '#334E68',
-    fontWeight: '700',
-  },
+  container: { flex: 1, backgroundColor: '#F5F9FC' },
+  scrollContent: { paddingHorizontal: 20, paddingTop: 30, paddingBottom: 60, alignItems: 'center', flexGrow: 1, justifyContent: 'center' },
+
+  logoContainer: { alignItems: 'center', marginBottom: 20 },
+  logoMark: { width: 52, height: 52, borderRadius: 16, backgroundColor: '#E0F2FE', alignItems: 'center', justifyContent: 'center', marginBottom: 8 },
+  logoHeart: { fontSize: 30, color: '#0284C7', fontWeight: '700' },
+  brandTitle: { fontSize: 26, fontWeight: '900', color: '#102A43', letterSpacing: 2 },
+  brandSubtitle: { fontSize: 13, color: '#0284C7', fontWeight: '700', marginTop: 2 },
+
+  card: { width: '100%', maxWidth: 520, backgroundColor: '#FFFFFF', borderRadius: 24, padding: 26, borderWidth: 1, borderColor: '#E2E8F0', shadowColor: '#102A43', shadowOpacity: 0.05, shadowRadius: 16, elevation: 3 },
+  cardTitle: { fontSize: 22, fontWeight: '900', color: '#102A43', marginBottom: 4 },
+  cardSubtitle: { fontSize: 13, color: '#627D98', marginBottom: 20 },
+
+  label: { fontSize: 13, fontWeight: '800', color: '#334E68', marginBottom: 8 },
+
+  roleGrid: { flexDirection: 'row', gap: 8, marginBottom: 18 },
+  roleOption: { flex: 1, backgroundColor: '#F8FAFC', borderWidth: 1, borderColor: '#CBD5E1', borderRadius: 12, padding: 10, alignItems: 'center' },
+  roleOptionActiveClient: { backgroundColor: '#F0FDF4', borderColor: '#16A34A' },
+  roleOptionActiveFamily: { backgroundColor: '#F0F9FF', borderColor: '#0284C7' },
+  roleOptionActiveCompanion: { backgroundColor: '#F0FDF4', borderColor: '#15803D' },
+  roleIcon: { fontSize: 20, marginBottom: 4 },
+  roleTitle: { fontSize: 11, fontWeight: '800', color: '#64748B' },
+  roleTitleActive: { color: '#102A43' },
+  roleSub: { fontSize: 9, color: '#94A3B8', textAlign: 'center', marginTop: 2 },
+
+  inputGroup: { marginBottom: 14 },
+  input: { backgroundColor: '#F8FAFC', borderWidth: 1, borderColor: '#CBD5E1', borderRadius: 12, paddingHorizontal: 16, paddingVertical: 12, fontSize: 14, color: '#102A43' },
+
+  submitBtn: { backgroundColor: '#0284C7', paddingVertical: 16, borderRadius: 14, alignItems: 'center', marginTop: 10 },
+  submitBtnText: { color: '#FFFFFF', fontSize: 14, fontWeight: '900' },
+
+  registerLink: { marginTop: 18, alignItems: 'center' },
+  registerLinkText: { fontSize: 13, color: '#627D98' },
+  registerBold: { fontWeight: '800', color: '#0284C7' },
+
+  backButton: { marginTop: 16 },
+  backButtonText: { fontSize: 13, color: '#627D98', fontWeight: '700' },
 });
