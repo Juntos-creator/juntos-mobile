@@ -6,6 +6,10 @@
     "orientation": "portrait",
     "icon": "./assets/images/logo.png",
     "userInterfaceStyle": "light",
+    "scheme": "juntos-mobile",
+    "web": {
+      "bundler": "metro"
+    },
     "ios": {
       "supportsTablet": true
     },
@@ -20,7 +24,9 @@
       "expo-router"
     ],
     "extra": {
-      "router": {},
+      "router": {
+        "origin": false
+      },
       "eas": {
         "projectId": "89f5e907-88c9-4f0d-b9aa-1d14b391d90c"
       }

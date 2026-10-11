@@ -14,7 +14,7 @@ import {
 import { useRouter } from 'expo-router';
 import { supabase } from '../../src/services/supabase';
 
-type UserRole = 'client' | 'family' | 'companion';
+type UserRole = 'client' | 'family' | 'companion' | 'rrhh' | 'admin' | 'contable' | 'legal';
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -60,34 +60,43 @@ export default function LoginScreen() {
           .eq('id', user.id)
           .maybeSingle();
 
-        const activeRole = userData?.user_type || role;
+        const activeRole = userData?.user_type || userData?.role || role;
         const isKycVerified = userData?.kyc_verified ?? user.user_metadata?.kyc_verified ?? false;
 
-        if (activeRole === 'companion' || activeRole === 'acompanante') {
-          if (!isKycVerified) {
-            showAlert('Verificación Requerida', 'Tu perfil de Acompañante requiere completar la validación KYC.');
-            router.replace('/kyc/companion-kyc' as any);
-          } else {
-            router.replace('/(companion)/dashboard' as any);
-          }
-        } else if (activeRole === 'family' || activeRole === 'familiar') {
-          router.replace('/(client)/FamilyPortalScreen?viewMode=family' as any);
-        } else {
-          router.replace('/(client)/home' as any);
+        // Redirección basada en el rol verificado en base de datos o seleccionado
+        switch (activeRole) {
+          case 'rrhh':
+            router.replace('/(admin)/rrhh-dashboard' as any);
+            break;
+          case 'admin':
+            router.replace('/(admin)/admin-dashboard' as any);
+            break;
+          case 'contable':
+            router.replace('/(admin)/accounting-dashboard' as any);
+            break;
+          case 'legal':
+            router.replace('/(admin)/legal-dashboard' as any);
+            break;
+          case 'companion':
+          case 'acompanante':
+            if (!isKycVerified) {
+              showAlert('Verificación Requerida', 'Tu perfil de Acompañante requiere completar la validación KYC.');
+              router.replace('/kyc/companion-kyc' as any);
+            } else {
+              router.replace('/(companion)/dashboard' as any);
+            }
+            break;
+          case 'family':
+          case 'familiar':
+            router.replace('/(client)/FamilyPortalScreen?viewMode=family' as any);
+            break;
+          default:
+            router.replace('/(client)/home' as any);
+            break;
         }
       }
     } catch (error: any) {
-      if (Platform.OS === 'web') {
-        localStorage.setItem('juntos_user_role', role);
-      }
-
-      if (role === 'companion') {
-        router.replace('/kyc/companion-kyc' as any);
-      } else if (role === 'family') {
-        router.replace('/(client)/FamilyPortalScreen?viewMode=family' as any);
-      } else {
-        router.replace('/(client)/home' as any);
-      }
+      showAlert('Error de inicio de sesión', error.message || 'No se pudo iniciar sesión.');
     } finally {
       setLoading(false);
     }
@@ -111,33 +120,69 @@ export default function LoginScreen() {
           <Text style={styles.label}>Selecciona tu Perfil</Text>
           <View style={styles.roleGrid}>
             <TouchableOpacity
-              style={[styles.roleOption, role === 'client' && styles.roleOptionActiveClient]}
+              style={[styles.roleOption, role === 'client' && styles.roleOptionActive]}
               onPress={() => setRole('client')}
               activeOpacity={0.85}
             >
               <Text style={styles.roleIcon}>👵</Text>
-              <Text style={[styles.roleTitle, role === 'client' && styles.roleTitleActive]}>Cliente Directo</Text>
-              <Text style={styles.roleSub}>Adulto mayor</Text>
+              <Text style={[styles.roleTitle, role === 'client' && styles.roleTitleActive]}>Cliente</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={[styles.roleOption, role === 'family' && styles.roleOptionActiveFamily]}
+              style={[styles.roleOption, role === 'family' && styles.roleOptionActive]}
               onPress={() => setRole('family')}
               activeOpacity={0.85}
             >
               <Text style={styles.roleIcon}>👥</Text>
               <Text style={[styles.roleTitle, role === 'family' && styles.roleTitleActive]}>Familiar</Text>
-              <Text style={styles.roleSub}>Supervisión</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={[styles.roleOption, role === 'companion' && styles.roleOptionActiveCompanion]}
+              style={[styles.roleOption, role === 'companion' && styles.roleOptionActive]}
               onPress={() => setRole('companion')}
               activeOpacity={0.85}
             >
               <Text style={styles.roleIcon}>🤝</Text>
               <Text style={[styles.roleTitle, role === 'companion' && styles.roleTitleActive]}>Acompañante</Text>
-              <Text style={styles.roleSub}>Verificado</Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* Selector de Perfiles Operativos y Administrativos */}
+          <View style={styles.roleGrid}>
+            <TouchableOpacity
+              style={[styles.roleOption, role === 'rrhh' && styles.roleOptionActive]}
+              onPress={() => setRole('rrhh')}
+              activeOpacity={0.85}
+            >
+              <Text style={styles.roleIcon}>📋</Text>
+              <Text style={[styles.roleTitle, role === 'rrhh' && styles.roleTitleActive]}>RRHH</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.roleOption, role === 'admin' && styles.roleOptionActive]}
+              onPress={() => setRole('admin')}
+              activeOpacity={0.85}
+            >
+              <Text style={styles.roleIcon}>⚙️</Text>
+              <Text style={[styles.roleTitle, role === 'admin' && styles.roleTitleActive]}>Admin</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.roleOption, role === 'contable' && styles.roleOptionActive]}
+              onPress={() => setRole('contable')}
+              activeOpacity={0.85}
+            >
+              <Text style={styles.roleIcon}>📊</Text>
+              <Text style={[styles.roleTitle, role === 'contable' && styles.roleTitleActive]}>Contable</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.roleOption, role === 'legal' && styles.roleOptionActive]}
+              onPress={() => setRole('legal')}
+              activeOpacity={0.85}
+            >
+              <Text style={styles.roleIcon}>⚖️</Text>
+              <Text style={[styles.roleTitle, role === 'legal' && styles.roleTitleActive]}>Legal</Text>
             </TouchableOpacity>
           </View>
 
@@ -176,19 +221,12 @@ export default function LoginScreen() {
               <ActivityIndicator color="#FFFFFF" />
             ) : (
               <Text style={styles.submitBtnText}>
-                {role === 'companion'
-                  ? 'Ingresar al Panel de Acompañante →'
-                  : role === 'family'
-                  ? 'Ingresar al Portal Familiar →'
-                  : 'Ingresar al Portal de Cliente →'}
+                {role === 'rrhh' ? 'Ingresar a RRHH →' :
+                 role === 'admin' ? 'Ingresar a Administración →' :
+                 role === 'contable' ? 'Ingresar a Contabilidad →' :
+                 role === 'legal' ? 'Ingresar a Legal →' : 'Ingresar al Sistema →'}
               </Text>
             )}
-          </TouchableOpacity>
-
-          <TouchableOpacity onPress={() => router.push('/auth/register')} style={styles.registerLink}>
-            <Text style={styles.registerLinkText}>
-              ¿No tienes una cuenta? <Text style={styles.registerBold}>Regístrate aquí</Text>
-            </Text>
           </TouchableOpacity>
         </View>
 
@@ -216,25 +254,18 @@ const styles = StyleSheet.create({
 
   label: { fontSize: 13, fontWeight: '800', color: '#334E68', marginBottom: 8 },
 
-  roleGrid: { flexDirection: 'row', gap: 8, marginBottom: 18 },
-  roleOption: { flex: 1, backgroundColor: '#F8FAFC', borderWidth: 1, borderColor: '#CBD5E1', borderRadius: 12, padding: 10, alignItems: 'center' },
-  roleOptionActiveClient: { backgroundColor: '#F0FDF4', borderColor: '#16A34A' },
-  roleOptionActiveFamily: { backgroundColor: '#F0F9FF', borderColor: '#0284C7' },
-  roleOptionActiveCompanion: { backgroundColor: '#F0FDF4', borderColor: '#15803D' },
-  roleIcon: { fontSize: 20, marginBottom: 4 },
-  roleTitle: { fontSize: 11, fontWeight: '800', color: '#64748B' },
-  roleTitleActive: { color: '#102A43' },
-  roleSub: { fontSize: 9, color: '#94A3B8', textAlign: 'center', marginTop: 2 },
+  roleGrid: { flexDirection: 'row', gap: 6, marginBottom: 12 },
+  roleOption: { flex: 1, backgroundColor: '#F8FAFC', borderWidth: 1, borderColor: '#CBD5E1', borderRadius: 10, padding: 8, alignItems: 'center' },
+  roleOptionActive: { backgroundColor: '#F0F9FF', borderColor: '#0284C7' },
+  roleIcon: { fontSize: 18, marginBottom: 2 },
+  roleTitle: { fontSize: 10, fontWeight: '800', color: '#64748B', textAlign: 'center' },
+  roleTitleActive: { color: '#0284C7' },
 
   inputGroup: { marginBottom: 14 },
   input: { backgroundColor: '#F8FAFC', borderWidth: 1, borderColor: '#CBD5E1', borderRadius: 12, paddingHorizontal: 16, paddingVertical: 12, fontSize: 14, color: '#102A43' },
 
   submitBtn: { backgroundColor: '#0284C7', paddingVertical: 16, borderRadius: 14, alignItems: 'center', marginTop: 10 },
   submitBtnText: { color: '#FFFFFF', fontSize: 14, fontWeight: '900' },
-
-  registerLink: { marginTop: 18, alignItems: 'center' },
-  registerLinkText: { fontSize: 13, color: '#627D98' },
-  registerBold: { fontWeight: '800', color: '#0284C7' },
 
   backButton: { marginTop: 16 },
   backButtonText: { fontSize: 13, color: '#627D98', fontWeight: '700' },
